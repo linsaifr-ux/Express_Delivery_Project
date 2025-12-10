@@ -9,7 +9,7 @@ class Customer:
         self.__last_name = last_name
         
         # This line invokes the logic defined in @address.setter
-        self.address = address 
+        self.address = address
         
         # This line invokes the logic defined in @number.setter
         self.number = phone_number
@@ -18,7 +18,7 @@ class Customer:
         
         # This line invokes the logic defined in @billing_pref.setter
         self.__billing_pref = billing_pref
-    
+        self.__bill_cnt = 0;
         
     @property
     def first_name(self) -> str:
@@ -52,8 +52,8 @@ class Customer:
         self.__number = phone_number
     
     @property
-    def billing_pref(self):
-        return self.__billing_pref
+    def billing_pref(self) -> BillingPref:
+        return self.__billing_pref    
         
     def __str__(self) -> str:
         return (f"Name\t: {self.first_name} {self.last_name}\n"
@@ -70,9 +70,18 @@ class Customer:
             raise ValueError("Invalid choice of billing preferrece!")
         self.__billing_pref = new_pref
         
+    def my_orders(self) -> list:
+        pass
     
-
-
+    def get(self, order_id):
+        pass
+    
+    def pay(bill):
+        pass
+    
+    def new_order():
+        pass
+    
         
 if __name__ == "__main__":
     c = Customer(5, "Samuel", "Lai", "address","12345", "0000", BillingPref.in_advance)
