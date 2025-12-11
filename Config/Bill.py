@@ -12,11 +12,11 @@ class Bill:
     def __init__(self, outer_ref: Customer, ID: int, payment_amount: float,
                   order_ID: str):
         self.outer = outer_ref
-        self.__ID = "B" + str(self.outer.ID)[1:] + str(self.outer.bill_cnt)
+        self.__ID = "B" + str(self.outer.ID)[1:] + f"{self.outer.bill_cnt: 04d}"
         self.__amount = payment_amount
         self.payment_arrangement = None
         self.__payment_status = False
-        self.__manifest = []
+        self.__manifest = [order_ID]
     
     @property
     def ID(self) -> str:
@@ -41,6 +41,7 @@ class Bill:
         return self.__payment_status
     
     
+
     
         
     
