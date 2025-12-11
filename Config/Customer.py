@@ -1,9 +1,21 @@
-from platformdirs import user_data_dir, user_config_dir
+from __future__ import annotations
+
+from platformdirs import user_data_dir
 from BillingPref import BillingPref
+from os.path import isfile
+import json
+
+def get_dir() -> str:
+    with open('config.json', 'r', encoding='utf-8') as file:
+        config = json.load(file)
+        
+    return user_data_dir(config['app_name'], config['project_name']) + config['customer_suffix']
 
 class Customer:
+    __data_path = get_dir()
     def __init__(self, ID: int, first_name: str, last_name: str, address: str,
-                 phone_number: str, password: str, billing_pref: BillingPref):
+                 phone_number: str, password: str, billing_pref: BillingPref,
+                 bill_cnt: int = 0):
         self.__ID = f"C{ID:05d}"
         self.__first_name = first_name
         self.__last_name = last_name
@@ -18,7 +30,7 @@ class Customer:
         
         # This line invokes the logic defined in @billing_pref.setter
         self.__billing_pref = billing_pref
-        self.__bill_cnt = 0;
+        self.__bill_cnt = bill_cnt;
         
     @property
     def first_name(self) -> str:
@@ -82,7 +94,61 @@ class Customer:
     def new_order():
         pass
     
+    def save(self) -> None:
+        """
+        Calling this method would save the Customer object's field as
+        a json file in local directory.
+        """        
+        snapshot = {'ID': int(self.ID[1:]),
+                    'first_name': self.first_name,
+                    'last_name': self.last_name,
+                    'address': self.address,
+                     'phone_number': self.number,
+                     'password': self.__password,
+                     'billing_pref': self.billing_pref.value,
+                     'bill_cnt': self.__bill_cnt}
+        
+        with open(self.__data_path + self.ID + ".json", 'w', encoding='utf-8') as file:
+            json.dump(snapshot, file, indent=4)
+            
+        return
+    
+    @classmethod
+    def from_ID(cls, ID: str) -> Customer:
+        """
+        This is a factory method that would reconstruct the customer instance 
+        base on <ID>.json in local directory.
+        
+        Parameters
+        ----------
+        ID : str
+            The ID of the customer instance to reconstruct
+
+        Returns
+        -------
+        Customer
+        """
+        file_path = cls.__data_path + ID + ".json"
+        if not isfile(file_path):
+            raise ValueError("The Customer with the provided ID does not exist!")
+            
+        with open(file_path, 'r', encoding='utf-8') as file:
+            snapshot: dict = json.load(file)
+            
+        instance = cls(snapshot['ID'],
+                       snapshot['first_name'], 
+                       snapshot['last_name'],
+                       snapshot['address'], 
+                       snapshot['phone_number'], 
+                       snapshot['password'],
+                       BillingPref(snapshot['billing_pref']),
+                       snapshot['bill_cnt'])
+        
+        return instance
         
 if __name__ == "__main__":
+    print(Customer._Customer__data_path)
     c = Customer(5, "Samuel", "Lai", "address","12345", "0000", BillingPref.in_advance)
-    print(c)
+    c.save()
+    a = Customer.from_ID('C00005')
+    print(a)
