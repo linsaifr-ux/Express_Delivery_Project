@@ -30,9 +30,9 @@ def create_dir(path: str) -> None:
 ## Parameters
 config: dict = {"app_name": "DeliverySystem",
                 "project_name":"SE_Term_Project",
-                "customer_suffix": "\\customer",
-                "staff_suffix": "\\staff",
-                "order_suffix": "\\order"
+                "customer_suffix": "\\customer\\",
+                "staff_suffix": "\\staff\\",
+                "order_suffix": "\\order\\"
                 }
 
 
@@ -51,11 +51,12 @@ create_dir(staff_dir)
 create_dir(order_dir)
 
 ## Create config.json
-with open(config_dir + "\\config.json", "w") as file:
+with open("config.json", "w") as file:
     json.dump(config, file, indent=4)
     
 ## Testing
 if __name__ == "__main__":
+    print(config_dir)
     from pathlib import Path
     
     assert Path(customer_dir).is_dir()
