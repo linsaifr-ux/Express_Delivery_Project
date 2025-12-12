@@ -1,0 +1,7 @@
+{
+    "app_name": "DeliverySystem",
+    "project_name": "SE_Term_Project",
+    "customer_suffix": "\\customer\\",
+    "staff_suffix": "\\staff\\",
+    "order_suffix": "\\order\\"
+}
