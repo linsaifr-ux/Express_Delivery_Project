@@ -5,8 +5,14 @@ Created on Wed Dec 10 21:26:22 2025
 
 @author: laisz
 """
+<<<<<<< HEAD
 from PaymentRecord import PaymentRecord
 from PaymentArrangement import PaymentMethod
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from Customer import Customer
+    
 
 def verify_transaction(transaction_ID, amount) -> bool:
     "A mock up for verifying a transaction."
@@ -42,6 +48,7 @@ class Bill:
     @property
     def manifest(self) -> list[str]:
         return self.__manifest.copy()
+
     
     ## Methods
     def pay(self, transaction_ID: str, method: PaymentMethod) -> None:        
@@ -52,8 +59,10 @@ class Bill:
             print("Error, The transaction ID provided is invalid!")
             
     def verify_payment(self) -> bool:
-        transaction_ID = self.payment_record.transaction
-        return verify_transaction(transaction_ID, self.amount)
+        """
+        Verify if the bill has been paid.
+        """
+        return self.__payment_status
     
     def add_item(self, order: Order) -> None:
         self.__manifest.append(order.ID)
