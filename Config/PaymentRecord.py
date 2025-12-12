@@ -22,7 +22,7 @@ class PaymentRecord:
         ----------
         transaction_ID : str
             The transaction ID.
-        payment_method : PaymentArrangement
+        method : PaymentMethod
             The method of payment.
         """
         self.__transaction_ID = transaction_ID
@@ -38,4 +38,3 @@ class PaymentRecord:
     @property
     def method(self) -> PaymentMethod:
         return self.__method
-
