@@ -1,24 +1,41 @@
 # -*- coding: utf-8 -*-
-"""
-Created on Fri Dec 12 16:19:21 2025
 
-@author: laisz
+from __future__ import annotations
+"""
+Created on Wed Dec 12 15:21:22 2025
+
+@author: Frank
 """
 from PaymentArrangement import PaymentMethod
 
 
-class PaymentRecord:        
+class PaymentRecord:
+    """
+    Payment Record class.
+    Stores transaction ID and payment method.
+    """
     def __init__(self, transaction_ID: str, method: PaymentMethod):
-        self.__transaction = transaction_ID
+        """
+        Initialize Payment Record.
+        
+        Parameters
+        ----------
+        transaction_ID : str
+            The transaction ID.
+        payment_method : PaymentArrangement
+            The method of payment.
+        """
+        self.__transaction_ID = transaction_ID
         
         if not isinstance(method, PaymentMethod):
             raise TypeError("The method provided is invalid!")
         self.__method = method
         
-    @property 
-    def transaction(self) -> str:
-        return self.__transaction
-    
-    @property 
+    @property
+    def transaction_ID(self) -> str:
+        return self.__transaction_ID
+        
+    @property
     def method(self) -> PaymentMethod:
         return self.__method
+
