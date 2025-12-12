@@ -4,6 +4,7 @@ from __future__ import annotations
 from platformdirs import user_data_dir
 import json
 from PaymentArrangement import BillingTiming
+from Bill import Bill
 from os.path import isfile
 
 
@@ -16,7 +17,7 @@ def get_dir() -> str:
 class Customer:
     
     ## Class attribute
-    __data_path = get_dir()
+    __DATA_PATH = get_dir()
     
     
     def __init__(self, ID: int, first_name: str, last_name: str, address: str,
@@ -33,10 +34,10 @@ class Customer:
         self.number = phone_number
         
         self.__password = password
-        
-        # This line invokes the logic defined in @billing_pref.setter
         self.__billing_pref = billing_pref
-        self.__bill_cnt = bill_cnt;
+        self.__bill_cnt = bill_cnt
+        self.__bill: list[Bill] = []
+        
         
     @property
     def first_name(self) -> str:
@@ -116,12 +117,17 @@ class Customer:
                      'phone_number': self.number,
                      'password': self.__password,
                      'billing_pref': self.billing_pref.value,
-                     'bill_cnt': self.__bill_cnt}
+                     'bill_cnt': self.__bill_cnt,
+                     'bill':[bill.snapshot() for bill in self.__bill]}
         
-        with open(self.__data_path + self.ID + ".json", 'w', encoding='utf-8') as file:
+        with open(self.__DATA_PATH + self.ID + ".json", 'w', encoding='utf-8') as file:
             json.dump(snapshot, file, indent=4)
             
         return
+    
+    def __restore(self, bills_snap: list) -> None:
+        for bill in bills_snap:
+            self.__bill.append(Bill.from_dict(bill, self))
     
     @classmethod
     def from_ID(cls, ID: str) -> Customer:
@@ -138,7 +144,7 @@ class Customer:
         -------
         Customer
         """
-        file_path = cls.__data_path + ID + ".json"
+        file_path = cls.__DATA_PATH + ID + ".json"
         if not isfile(file_path):
             raise ValueError("The Customer with the provided ID does not exist!")
             
@@ -154,10 +160,12 @@ class Customer:
                        BillingTiming(snapshot['billing_pref']),
                        snapshot['bill_cnt'])
         
+        if instance.bill_cnt > 0:
+            instance.__restore(snapshot['bill'])
+        
         return instance
         
 if __name__ == "__main__":
-    print(Customer._Customer__data_path)
     c = Customer(5, "Samuel", "Lai", "address","12345", "0000", BillingTiming.in_advance)
     c.save()
     a = Customer.from_ID('C00005')
