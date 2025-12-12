@@ -73,6 +73,10 @@ class Customer:
     def billing_pref(self) -> BillingTiming:
         return self.__billing_pref
         
+    @property
+    def bill_cnt(self) -> int:
+        return self.__bill_cnt
+    
     def __str__(self) -> str:
         return (f"Name\t: {self.first_name} {self.last_name}\n"
                 + f"ID\t\t: {self.ID}\n"

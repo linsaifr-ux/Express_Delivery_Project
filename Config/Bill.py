@@ -5,23 +5,51 @@ Created on Wed Dec 10 21:26:22 2025
 
 @author: laisz
 """
-<<<<<<< HEAD
 from PaymentRecord import PaymentRecord
 from PaymentArrangement import PaymentMethod
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from Customer import Customer
+    from Order import Order
     
 
 def verify_transaction(transaction_ID, amount) -> bool:
     "A mock up for verifying a transaction."
     return True
 
-class Bill:        
-    # NameError resolved
-    def __init__(self, outer_ref: Customer, ID: int, payment_amount: float,
-                  order_ID: str):
+class Bill:
+    """
+    Represents a bill for a Customer, tracking the payment amount,
+    status, and associated orders (manifest).
+
+    Attributes:
+        outer (Customer): Reference to the Customer object this bill belongs to.
+        ID (str): The unique identifier for the bill.
+        amount (float): The total monetary amount of the bill.
+        payment_status (bool): True if the bill has been paid, False otherwise.
+        payment_record (PaymentRecord or None): Details of the payment if completed.
+        manifest (list[str]): A list of Order IDs included in this bill.
+
+    Methods:
+        pay(transaction_ID, method): Attempts to process payment for the bill.
+        verify_payment(): Returns the current payment status.
+        add_item(order): Adds an Order to the bill, updating the manifest and amount.
+    """
+    def __init__(self, outer_ref: Customer, payment_amount: float, order_ID: str):
+        """
+        Initialize Bill
+
+        Parameters
+        ----------
+        outer_ref : Customer
+            The customer who will be paying the bill.
+        payment_amount : float
+            The amount of money to pay.
+        order_ID : str
+            The delivery that is billed.
+
+        """
         self.outer = outer_ref
         self.__ID = "B" + str(self.outer.ID)[1:] + f"{self.outer.bill_cnt: 04d}"
         self.__amount = payment_amount
@@ -51,7 +79,24 @@ class Bill:
 
     
     ## Methods
-    def pay(self, transaction_ID: str, method: PaymentMethod) -> None:        
+    def pay(self, transaction_ID: str, method: PaymentMethod) -> None:
+        """
+        Mark the bill instance as payed by providing transaction_ID and the
+        payment method chosen.
+        
+        Parameters
+        ----------
+        transaction_ID : str
+            The transaction ID.
+        method : PaymentMethod
+            The method of payment.
+            
+            
+        Return
+        ----------
+        None
+        
+        """
         if verify_transaction(transaction_ID, self.amount):
             self.__payment_status = True
             self.__payment_record = PaymentRecord(transaction_ID, method)
@@ -61,9 +106,32 @@ class Bill:
     def verify_payment(self) -> bool:
         """
         Verify if the bill has been paid.
+        
+        Parameters
+        ----------
+        None
+            
+            
+        Return
+        ----------
+        None
+        
         """
         return self.__payment_status
     
     def add_item(self, order: Order) -> None:
+        """
+        Add another order's payment to the bill
+
+        Parameters
+        ----------
+        order : Order
+            The purchase of a delivery service
+
+        Returns
+        -------
+        None
+
+        """
         self.__manifest.append(order.ID)
         self.__amount += order.fee
