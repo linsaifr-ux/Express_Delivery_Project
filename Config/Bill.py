@@ -6,6 +6,11 @@ Created on Wed Dec 10 21:26:22 2025
 @author: laisz
 """
 from PaymentArrangement import PaymentArrangement
+from Payment_Record import Payment_Record
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from Customer import Customer
 
 class Bill:
     # NameError resolved
@@ -40,7 +45,12 @@ class Bill:
     def payment_status(self) -> bool:
         return self.__payment_status
     
-    
+    def verify_payment(self) -> bool:
+        """
+        Verify if the bill has been paid.
+        """
+        return self.__payment_status
+        
 
     
         
