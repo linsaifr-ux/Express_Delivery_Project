@@ -1,9 +1,11 @@
 from __future__ import annotations
-
+"""
+"""
 from platformdirs import user_data_dir
-from BillingPref import BillingPref
-from os.path import isfile
 import json
+from PaymentArrangement import BillingTiming
+from os.path import isfile
+
 
 def get_dir() -> str:
     with open('config.json', 'r', encoding='utf-8') as file:
@@ -12,9 +14,13 @@ def get_dir() -> str:
     return user_data_dir(config['app_name'], config['project_name']) + config['customer_suffix']
 
 class Customer:
+    
+    ## Class attribute
     __data_path = get_dir()
+    
+    
     def __init__(self, ID: int, first_name: str, last_name: str, address: str,
-                 phone_number: str, password: str, billing_pref: BillingPref,
+                 phone_number: str, password: str, billing_pref: BillingTiming,
                  bill_cnt: int = 0):
         self.__ID = f"C{ID:05d}"
         self.__first_name = first_name
@@ -64,8 +70,8 @@ class Customer:
         self.__number = phone_number
     
     @property
-    def billing_pref(self) -> BillingPref:
-        return self.__billing_pref    
+    def billing_pref(self) -> BillingTiming:
+        return self.__billing_pref
         
     def __str__(self) -> str:
         return (f"Name\t: {self.first_name} {self.last_name}\n"
@@ -77,9 +83,9 @@ class Customer:
     def verify(self, password: str) -> bool:
         pass
     
-    def set_billing_pref(self, new_pref: BillingPref) -> None:
-        if not isinstance(new_pref, BillingPref):
-            raise ValueError("Invalid choice of billing preferrece!")
+    def set_billing_pref(self, new_pref: BillingTiming) -> None:
+        if not isinstance(new_pref, BillingTiming):
+            raise TypeError("Invalid choice of billing preferrece!")
         self.__billing_pref = new_pref
         
     def my_orders(self) -> list:
@@ -141,14 +147,14 @@ class Customer:
                        snapshot['address'], 
                        snapshot['phone_number'], 
                        snapshot['password'],
-                       BillingPref(snapshot['billing_pref']),
+                       BillingTiming(snapshot['billing_pref']),
                        snapshot['bill_cnt'])
         
         return instance
         
 if __name__ == "__main__":
     print(Customer._Customer__data_path)
-    c = Customer(5, "Samuel", "Lai", "address","12345", "0000", BillingPref.in_advance)
+    c = Customer(5, "Samuel", "Lai", "address","12345", "0000", BillingTiming.in_advance)
     c.save()
     a = Customer.from_ID('C00005')
     print(a)
