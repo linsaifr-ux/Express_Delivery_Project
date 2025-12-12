@@ -36,6 +36,7 @@ class Bill:
         verify_payment(): Returns the current payment status.
         add_item(order): Adds an Order to the bill, updating the manifest and amount.
     """
+    
     def __init__(self, outer_ref: Customer, payment_amount: float, order_ID: str):
         """
         Initialize Bill
@@ -51,7 +52,7 @@ class Bill:
 
         """
         self.outer = outer_ref
-        self.__ID = "B" + str(self.outer.ID)[1:] + f"{self.outer.bill_cnt: 04d}"
+        self.__ID = "B" + str(self.outer.ID)[1:] + f"{self.outer.bill_cnt:04d}"
         self.__amount = payment_amount
         self.__payment_status = False
         self.__payment_record = None
@@ -135,3 +136,45 @@ class Bill:
         """
         self.__manifest.append(order.ID)
         self.__amount += order.fee
+        
+    def snapshot(self) -> dict:
+        snapshot = {'ID': self.ID[len(self.outer.ID):],
+                    'amount': self.amount,
+                    'payment_status': self.payment_status,
+                    'manifest': self.__manifest}
+        if self.payment_status:
+            snapshot['payment_record'] = self.payment_record.snapshot()
+            
+        return snapshot
+    
+    def __restore(self, payment_status:bool, payment_record: PaymentRecord | None,
+                  manifest: list[str]) -> None:
+        self.__payment_status = payment_status
+        self.__payment_record = payment_record
+        self.__manifest = manifest
+    
+    @classmethod
+    def from_dict(cls, data: dict, outer_ref: Customer) -> Bill:
+        """
+        Reconstruct the instance from a previous snapshot
+        
+        """
+        instance = cls(outer_ref, data['amount'], '')
+        instance.__restore(data['payment_status'],
+                           PaymentRecord.from_dict(data.get('payment_record', None)),
+                           data['manifest'])
+        
+        return instance
+    
+if __name__ == "__main__":
+    class ABC:
+        def __init__(self):
+            self.ID = 'C00005'
+            self.bill_cnt = 40
+    bill = Bill(ABC(), 100.0, 'O124577')
+    bill.pay('55555', PaymentMethod.card)
+    print(bill.ID)
+    snap = bill.snapshot()
+    print(snap)
+    copy = Bill.from_dict(snap, ABC())
+    print(copy.payment_record)

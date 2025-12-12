@@ -38,3 +38,30 @@ class PaymentRecord:
     @property
     def method(self) -> PaymentMethod:
         return self.__method
+    
+    def snapshot(self) -> dict:
+        """
+        Create a dictionary containing the data of the object
+        """
+        snapshot = {'transaction_ID': self.transaction_ID,
+                    'method': self.method.value}
+        return snapshot
+    
+    @classmethod
+    def from_dict(cls, data: dict|None) -> PaymentRecord:
+        """
+        Reconstruct the instance from a previous snapshot
+        
+        """
+        if data is None:
+            return None
+        else:
+            return cls(data['transaction_ID'], PaymentMethod(data['method']))
+    
+if __name__ == "__main__":
+    record = PaymentRecord('104060', PaymentMethod.cash)
+    sp = record.snapshot()
+    replica = PaymentRecord.from_dict(sp)
+    print(replica.transaction_ID, replica.method)
+    
+    
