@@ -18,6 +18,9 @@ class Customer:
     
     ## Class attribute
     __DATA_PATH = get_dir()
+    __registery = set()
+    
+    def __new__(cls)
     
     
     def __init__(self, ID: int, first_name: str, last_name: str, address: str,
