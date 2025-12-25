@@ -9,6 +9,7 @@ import json
 import pickle
 from PaymentArrangement import BillingTiming
 from Bill import Bill
+from Location import Destination
 from os.path import isfile, join
 
 
@@ -26,12 +27,12 @@ class Customer:
     __registery = set()
     
     
-    def __init__(self, ID: int, first_name: str, last_name: str, address: str,
+    def __init__(self, ID: int, first_name: str, last_name: str, address: Destination,
                  phone_number: str, password: str, billing_pref: BillingTiming,
                  bill_cnt: int = 0):
-        self.__ID = f"C{ID:05d}"
-        self.__first_name = first_name
-        self.__last_name = last_name
+        self._ID = f"C{ID:05d}"
+        self._first_name = first_name
+        self._last_name = last_name
         
         # This line invokes the logic defined in @address.setter
         self.address = address
@@ -39,50 +40,50 @@ class Customer:
         # This line invokes the logic defined in @number.setter
         self.number = phone_number
         
-        self.__password = password
-        self.__billing_pref = billing_pref
-        self.__bill_cnt = bill_cnt
-        self.__bill: list[Bill] = []
+        self._password = password
+        self._billing_pref = billing_pref
+        self._bill_cnt = bill_cnt
+        self._bill: list[Bill] = []
         
         
     @property
     def first_name(self) -> str:
-        return self.__first_name
+        return self._first_name
     
     @property
     def last_name(self) -> str:
-        return self.__last_name
+        return self._last_name
     
     @property
     def address(self) -> str:
-        return self.__address
+        return self._address
     
     @address.setter
     def address(self, new_address):
-        self.__address = new_address
+        self._address = new_address
         
     @property
     def ID(self) -> str:
-        return self.__ID
+        return self._ID
     
     @property
     def number(self):
-        return self.__number
+        return self._number
     
     @number.setter
     def number(self, phone_number: str) -> None:
         for char in phone_number:
             if not (char.isdigit() or char == " "):
                 raise ValueError(f"phone_number contains invalid character '{char}'.")
-        self.__number = phone_number
+        self._number = phone_number
     
     @property
     def billing_pref(self) -> BillingTiming:
-        return self.__billing_pref
+        return self._billing_pref
         
     @property
     def bill_cnt(self) -> int:
-        return self.__bill_cnt
+        return self._bill_cnt
     
     def __str__(self) -> str:
         return (f"Name\t: {self.first_name} {self.last_name}\n"
