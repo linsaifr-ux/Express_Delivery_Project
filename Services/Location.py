@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from __future__ import annotations
 """
 Created on Thu Dec 25 13:08:25 2025
 

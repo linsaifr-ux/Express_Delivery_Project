@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from __future__ import annotations
 """
 Created on Thu Dec 25 12:44:55 2025
 
@@ -10,7 +11,7 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from Order import Order
 
-class Vihecle(ABC):
+class Vehicle(ABC):
     """
     Attributes:
         license_plate (str): The license plate number of the vehicle
@@ -45,15 +46,15 @@ class Vihecle(ABC):
         pass
     
     
-class Minivan(Vihecle):
+class Minivan(Vehicle):
     def __str__(self) -> str:
         return f"minivan ({self.license_plate})"
 
-class MiniTruck(Vihecle):
+class MiniTruck(Vehicle):
     def __str__(self) -> str:
         return f"mini truck ({self.license_plate})"
 
-class Truck(Vihecle):
+class Truck(Vehicle):
     def __str__(self) -> str:
         return f"truck ({self.license_plate})"
 
