@@ -8,6 +8,7 @@ Created on Wed Dec 10 21:26:22 2025
 from PaymentRecord import PaymentRecord
 from PaymentArrangement import PaymentMethod
 from typing import TYPE_CHECKING
+from datetime import date, timedelta
 
 if TYPE_CHECKING:
     from Customer import Customer
@@ -28,6 +29,8 @@ class Bill:
         ID (str): The unique identifier for the bill.
         amount (float): The total monetary amount of the bill.
         payment_status (bool): True if the bill has been paid, False otherwise.
+        due_date (date): the date this bill is due to, which is 15 days after
+                        the bill is issued
         payment_record (PaymentRecord or None): Details of the payment if completed.
         manifest (list[str]): A list of Order IDs included in this bill.
 
@@ -55,6 +58,7 @@ class Bill:
         self.__ID = "B" + str(self.outer.ID)[1:] + f"{self.outer.bill_cnt:04d}"
         self.__amount = payment_amount
         self.__payment_status = False
+        self._due_date = date.today() + timedelta(days=15)
         self.__payment_record = None
         self.__manifest = [order_ID]
     
@@ -69,6 +73,10 @@ class Bill:
     @property
     def payment_status(self) -> bool:
         return self.__payment_status
+    
+    @property
+    def due_date(self) -> date:
+        return self._due_date
     
     @property
     def payment_record(self) -> PaymentRecord:
@@ -166,12 +174,26 @@ class Bill:
         
         return instance
     
+class MonthlyBill(Bill):
+    def __init__(self, outer_ref, payment_amount, order_ID):
+        super().__init__(outer_ref, payment_amount, order_ID) 
+        
+        # set self._due_date to 15th of next month
+        self._due_date = (date.today().replace(day=1) + timedelta(days=32)).replace(day=15)
+        
+    @property
+    def month(self) -> int:
+        return (self.due_date.month - 2) % 12 + 1
+        
+    
 if __name__ == "__main__":
     class ABC:
         def __init__(self):
             self.ID = 'C00005'
             self.bill_cnt = 40
-    bill = Bill(ABC(), 100.0, 'O124577')
+    bill = MonthlyBill(ABC(), 100.0, 'O124577')
+    print(bill.due_date)
+    print(bill.month)
     bill.pay('55555', PaymentMethod.card)
     print(bill.ID)
     snap = bill.snapshot()
