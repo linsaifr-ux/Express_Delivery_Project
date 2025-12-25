@@ -9,6 +9,7 @@ from PaymentRecord import PaymentRecord
 from PaymentArrangement import PaymentMethod
 from typing import TYPE_CHECKING
 from datetime import date, timedelta, datetime
+from zoneinfo import ZoneInfo
 
 if TYPE_CHECKING:
     from Customer import Customer
@@ -31,7 +32,7 @@ class Bill:
         issue_status (bool): whether the customer is notified to pay this bill
         payment_status (bool): True if the bill has been paid, False otherwise.
         due_date (date): the date this bill is due, which is 15 days after
-                        the bill is issued
+                        the bill is issued (timezone = +8)
         payment_record (PaymentRecord or None): Details of the payment if completed.
         manifest (list[str]): A list of Order IDs included in this bill.
 
@@ -147,7 +148,8 @@ class Bill:
         None
         """
         
-        self._due_date = date.today() + timedelta(days=15)
+        self._due_date = (datetime.now(ZoneInfo("Asia/Taipei")).date()
+                          + timedelta(days=15))
         self._issue_status = True
     
     def snapshot(self) -> dict:
@@ -197,7 +199,7 @@ class Bill:
         instance._issue_status = data.get('issue_status')
         instance._payment_status = data.get('payment_status')
         instance._due_date = None
-        instance._payment_record = PaymentRecord.from_dict(data.get('payment_record'), None)
+        instance._payment_record = PaymentRecord.from_dict(data.get('payment_record', None))
         instance._manifest = data.get('manifest')
         
         if data.get('due_date', None) is not None:
@@ -266,7 +268,6 @@ class MonthlyBill(Bill):
         self._issue_status = True
     
 if __name__ == "__main__":
-    
     class ABC:
         def __init__(self):
             self.ID = 'C00005'
@@ -281,8 +282,11 @@ if __name__ == "__main__":
     print(bill.month)
     bill.pay('55555', PaymentMethod.card)
     print(bill.ID)
+    bill.issue()
     snap = bill.snapshot()
+    
+    print(snap)
     print(snap)
     copy = Bill.from_dict(snap, ABC())
-    print(copy.payment_record)
+    print(copy.due_date)
     
