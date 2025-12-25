@@ -257,7 +257,7 @@ class MonthlyBill(Bill):
         
     def issue(self) -> None:
         """
-        changed the bill status to issued and set the due_date
+        changed the bill status to issued
 
         Returns
         -------
