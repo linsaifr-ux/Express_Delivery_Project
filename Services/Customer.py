@@ -1,11 +1,15 @@
 from __future__ import annotations
 """
+Created on Wed Dec 10 21:26:22 2025
+
+@author: laisz
 """
 from platformdirs import user_data_dir
 import json
+import pickle
 from PaymentArrangement import BillingTiming
 from Bill import Bill
-from os.path import isfile
+from os.path import isfile, join
 
 
 def get_dir() -> str:
@@ -15,12 +19,11 @@ def get_dir() -> str:
     return user_data_dir(config['app_name'], config['project_name']) + config['customer_suffix']
 
 class Customer:
-    
+    """
+    """
     ## Class attribute
     __DATA_PATH = get_dir()
     __registery = set()
-    
-    def __new__(cls)
     
     
     def __init__(self, ID: int, first_name: str, last_name: str, address: str,
@@ -111,26 +114,12 @@ class Customer:
     def save(self) -> None:
         """
         Calling this method would save the Customer object's field as
-        a json file in local directory.
+        a pkl file in local directory.
         """        
-        snapshot = {'ID': int(self.ID[1:]),
-                    'first_name': self.first_name,
-                    'last_name': self.last_name,
-                    'address': self.address,
-                     'phone_number': self.number,
-                     'password': self.__password,
-                     'billing_pref': self.billing_pref.value,
-                     'bill_cnt': self.__bill_cnt,
-                     'bill':[bill.snapshot() for bill in self.__bill]}
-        
-        with open(self.__DATA_PATH + self.ID + ".json", 'w', encoding='utf-8') as file:
-            json.dump(snapshot, file, indent=4)
-            
+        with open(join(self.__DATA_PATH, f"{self.ID}.pkl"), 'wb') as file:
+            pickle.dump(self, file, protocol=4)
         return
     
-    def __restore(self, bills_snap: list) -> None:
-        for bill in bills_snap:
-            self.__bill.append(Bill.from_dict(bill, self))
     
     @classmethod
     def from_ID(cls, ID: str) -> Customer:
@@ -147,29 +136,26 @@ class Customer:
         -------
         Customer
         """
-        file_path = cls.__DATA_PATH + ID + ".json"
+        file_path = join(cls.__DATA_PATH , f"{ID}.pkl")
         if not isfile(file_path):
-            raise ValueError("The Customer with the provided ID does not exist!")
+            raise FileNotFoundError("The Customer with the provided ID does not exist!")
             
-        with open(file_path, 'r', encoding='utf-8') as file:
-            snapshot: dict = json.load(file)
-            
-        instance = cls(snapshot['ID'],
-                       snapshot['first_name'], 
-                       snapshot['last_name'],
-                       snapshot['address'], 
-                       snapshot['phone_number'], 
-                       snapshot['password'],
-                       BillingTiming(snapshot['billing_pref']),
-                       snapshot['bill_cnt'])
-        
-        if instance.bill_cnt > 0:
-            instance.__restore(snapshot['bill'])
+        with open(file_path, 'rb') as file:
+            instance = pickle.load(file)
         
         return instance
         
 if __name__ == "__main__":
-    c = Customer(5, "Samuel", "Lai", "address","12345", "0000", BillingTiming.in_advance)
+    def check_pickleability(obj):
+        try:
+            pickle.dumps(obj)
+            print("✅ Everything in the composition is pickleable!")
+        except Exception as e:
+            print(f"❌ Pickle Error found: {e}")
+
+    # Run it on your customer
+    c = Customer(5, "Samuel", "Lai", "address", "12345", "0000", BillingTiming.in_advance)
+    check_pickleability(c)
     c.save()
     a = Customer.from_ID('C00005')
     print(a)
