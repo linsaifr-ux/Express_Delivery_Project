@@ -5,8 +5,7 @@ Created on Wed Dec 10 21:26:22 2025
 @author: laisz
 """
 from platformdirs import user_data_dir
-import json
-import pickle
+import json, pickle
 from PaymentArrangement import BillingTiming
 from Bill import Bill
 from Location import Destination
@@ -30,6 +29,9 @@ class Customer:
     def __init__(self, ID: int, first_name: str, last_name: str, address: Destination,
                  phone_number: str, password: str, billing_pref: BillingTiming,
                  bill_cnt: int = 0):
+        if isfile(join(self.__DATA_PATH, f"{self.ID}.pkl")):
+            raise ValueError("The ID specified is taken. Maybe use 'from_ID' to unpickle it?")
+        
         self._ID = f"C{ID:05d}"
         self._first_name = first_name
         self._last_name = last_name
@@ -119,6 +121,10 @@ class Customer:
         """        
         with open(join(self.__DATA_PATH, f"{self.ID}.pkl"), 'wb') as file:
             pickle.dump(self, file, protocol=4)
+        return
+    
+    def __del__(self):
+        self.save()
         return
     
     
