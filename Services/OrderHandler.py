@@ -27,16 +27,15 @@ class OrdersHandler:
     Orders Handler class.
     Manages collection of orders.
     """
-    __ORDERS_PATH = get_dir()
+    _instance = None
     
     def __new__(cls, *args):
         if cls._instance is None:
-            cls._instance = cls(*args)
-            
+            cls._instance = super().__new__(cls)
+            cls._instance.__ORDERS_PATH = get_dir()
+            cls._instance._orders = {}
         return cls._instance
-            
-    def __init__(self):
-        self._orders = {}
+        
         
     def add(self, *order_args: tuple) -> str:
         order = Order(*order_args)
