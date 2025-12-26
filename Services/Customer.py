@@ -9,6 +9,8 @@ import json, pickle
 from PaymentArrangement import BillingTiming
 from Bill import Bill
 from Location import Destination
+from OrderHandler import OrdersHandler
+from Order import Order
 from os.path import isfile, join
 
 
@@ -23,7 +25,7 @@ class Customer:
     """
     ## Class attribute
     __DATA_PATH = get_dir()
-    __registery = set()
+    _OH = OrdersHandler()
     
     
     def __init__(self, ID: int, first_name: str, last_name: str, address: Destination,
@@ -45,7 +47,7 @@ class Customer:
         self._password = password
         self._billing_pref = billing_pref
         self._bill_cnt = bill_cnt
-        self._bill: list[Bill] = []
+        self._bill: dict[Bill] = {}
         
         
     @property
@@ -87,6 +89,8 @@ class Customer:
     def bill_cnt(self) -> int:
         return self._bill_cnt
     
+    
+    ## Methods
     def __str__(self) -> str:
         return (f"Name\t: {self.first_name} {self.last_name}\n"
                 + f"ID\t\t: {self.ID}\n"
@@ -95,25 +99,47 @@ class Customer:
                 + f"Billing Preferrence\t: {self.billing_pref.name}")
     
     def verify(self, password: str) -> bool:
-        pass
+        return self._password == password
     
     def set_billing_pref(self, new_pref: BillingTiming) -> None:
         if not isinstance(new_pref, BillingTiming):
             raise TypeError("Invalid choice of billing preferrece!")
         self.__billing_pref = new_pref
         
-    def my_orders(self) -> list:
-        pass
+    def my_orders(self) -> list[Order]:
+        return self._OH.filter_by_customer(self.ID, self.bill_cnt)
     
-    def get(self, order_id):
-        pass
+    def get(self, order_ID: str) -> Order:
+        if self.ID[1:] == order_ID[1:6]:
+            return self._OH.get(order_ID)
+        else:
+            raise RuntimeError(f"Access to order ({order_ID}) denied!")
+            
+    def filter_by_date(self, start_date, end_date) -> list[Order]:
+        targets = []
+        for order in self.my_orders():
+            if order.due_date >= start_date and order.due_date <= end_date:
+                targets.append(order)
+                
+        return targets
     
-    def pay(bill):
-        pass
+    def bill(self, order: Order) -> None:
+        if order.bill_ref is not None:
+            return
+        
+        if (order.bill_timing is not BillingTiming.monthly
+            or self._bill.values()[-1].issue_status): # The last bill is issued
+            my_bill = Bill(self, order)
+            self._bill[my_bill.ID] = my_bill
+        else:
+            self._bill.values()[-1].add_item(order)
+        
+    def pay(self, bill_ID: str, *pay_args) -> None:
+        self._bill[bill_ID].pay(*pay_args)
     
-    def new_order():
-        pass
-    
+    def new_order(self, *order_args):
+        self._OH.add(*order_args)
+        
     def save(self) -> None:
         """
         Calling this method would save the Customer object's field as
