@@ -15,7 +15,13 @@ from Location import Location, Destination
 from Package import Package
 from Bill import Bill
 from Entry import Entry, Arrival, Transit, OtherEvent
+from PaymentArrangement import BillingTiming
+from os import listdir
 from os.path import join, isfile
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from Customer import Customer
 
 
 def get_dir() -> str:
@@ -28,16 +34,18 @@ class Order:
     """
     """
     __DATA_PATH = get_dir()
+    __order_cnt = len(listdir(__DATA_PATH))
     
     def __init__(self, customer_ID: str,
-                 bill_cnt: int, # Customer's bill_cnt
+                 bill_timing: BillingTiming,
                  service: Service, 
                  origin: Location,
                  destination: Location,
-                 receiver_ID: str,
+                 collector_ID: str,
                  is_international: bool,
                  *package_args: tuple):
-        self._ID = f"O{customer_ID[1:]}{bill_cnt:05d}"
+        self._payer = customer_ID
+        self._ID = f"O{self.__order_cnt:013d}"
         self._service = service
         self._collection_day = datetime.now(ZoneInfo("Asia/Taipei"))
         self._due_day = self._collection_date + timedelta(days=service.day)
@@ -45,12 +53,16 @@ class Order:
         self._destination = destination
         self._is_international = is_international
         self._fee = None
-        self._bill_ref = None
+        self.bill_ref = None
+        self._bill_timing = bill_timing
         self._status = Status.normal
         self._package = Package(*package_args)
-        self._log = [Arrival(receiver_ID, origin)]
+        self._log = [Arrival(collector_ID, origin)]
         
-        
+    @property
+    def payer(self) -> str:
+        return self._payer
+    
     @property
     def ID(self) -> str:
         return self._ID
@@ -111,6 +123,17 @@ class Order:
     @property
     def bill_ref(self) -> Bill:
         return self._bill_ref
+    
+    @property
+    def bill_timing(self) -> BillingTiming:
+        return self._bill_timing
+    
+    @bill_timing.setter
+    def bill_timing(self, timing: BillingTiming) -> None:
+        if not isinstance(timing, BillingTiming):
+            raise TypeError("{timing} is not of type BillingTiming")
+        
+        self._bill_timing = timing
     
     @property
     def status(self) -> Status:
