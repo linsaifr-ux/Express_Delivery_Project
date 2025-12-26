@@ -41,7 +41,7 @@ class Bill:
         verify_payment(): Returns the current payment status.
     """
     
-    def __init__(self, outer_ref: Customer, order: Order = None):
+    def __init__(self, outer_ref: Customer, order: Order):
         """
         Initialize Bill
 
