@@ -45,16 +45,19 @@ class OrdersHandler:
     def get(self, order_ID: str) -> Order:
         return self._orders.get(order_ID, Order.from_ID(order_ID))
         
-    def filter_by_customer(self, customer_ID: str, bill_cnt: int) -> list[Order]:
-        orders = []
-        for i in range(bill_cnt):
-            file_path = join(self._ORDERS_PATH, f"{customer_ID[1:]}{i:05d}")
-            
-            if not isfile(file_path):
+    def filter_by_customer(self, customer_ID: str) -> list[Order]:
+        targets = []
+        for entry in listdir(self.__ORDERS_PATH):
+            full_path = join(self.__ORDERS_PATH, entry)
+            if not isfile(full_path):
                 continue
-            orders.append(Order.from_ID(file_path))
+                
+            order = Order.from_ID(entry[:14])
             
-        return orders            
+            if order.payer == customer_ID:
+                targets.append(order)
+                
+        return targets            
         
         
     def filter_by_date(self, start_date, end_date) -> list[Order]:

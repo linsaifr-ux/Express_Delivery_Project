@@ -11,6 +11,7 @@ from Bill import Bill
 from Location import Destination
 from OrderHandler import OrdersHandler
 from Order import Order
+from os import listdir
 from os.path import isfile, join
 
 
@@ -26,15 +27,16 @@ class Customer:
     ## Class attribute
     __DATA_PATH = get_dir()
     _OH = OrdersHandler()
+    _cnt = len(listdir(__DATA_PATH))
     
     
-    def __init__(self, ID: int, first_name: str, last_name: str, address: Destination,
+    def __init__(self, first_name: str, last_name: str, address: Destination,
                  phone_number: str, password: str, billing_pref: BillingTiming,
                  bill_cnt: int = 0):
         if isfile(join(self.__DATA_PATH, f"{ID}.pkl")):
             raise ValueError("The ID specified is taken. Maybe use 'from_ID' to unpickle it?")
         
-        self._ID = f"C{ID:05d}"
+        self._ID = f"C{self._cnt:05d}"
         self._first_name = first_name
         self._last_name = last_name
         
@@ -48,6 +50,7 @@ class Customer:
         self._billing_pref = billing_pref
         self._bill_cnt = bill_cnt
         self._bill: dict[Bill] = {}
+        self._cnt += 1
         
         
     @property

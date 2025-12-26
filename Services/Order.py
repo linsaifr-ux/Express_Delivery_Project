@@ -18,10 +18,7 @@ from Entry import Entry, Arrival, Transit, OtherEvent
 from PaymentArrangement import BillingTiming
 from os import listdir
 from os.path import join, isfile
-from typing import TYPE_CHECKING
 
-if TYPE_CHECKING:
-    from Customer import Customer
 
 
 def get_dir() -> str:
@@ -48,12 +45,12 @@ class Order:
         self._ID = f"O{self.__order_cnt:013d}"
         self._service = service
         self._collection_day = datetime.now(ZoneInfo("Asia/Taipei"))
-        self._due_day = self._collection_date + timedelta(days=service.day)
+        self._due_day = self._collection_day + timedelta(days=service.day)
         self._origin = origin
         self._destination = destination
         self._is_international = is_international
         self._fee = None
-        self.bill_ref = None
+        self._bill_ref = None
         self._bill_timing = bill_timing
         self._status = Status.normal
         self._package = Package(*package_args)
