@@ -9,8 +9,11 @@ from platformdirs import user_data_dir
 from Order import Order
 from Vehicle import Vehicle
 from Location import Repository
-import json
+import json, pickle
+from os import listdir
 from os.path import isfile, join
+from datetime import datetime
+from zoneinfo import ZoneInfo
 
 
 def get_dir() -> str:
@@ -19,12 +22,12 @@ def get_dir() -> str:
         
     return user_data_dir(config['app_name'], config['project_name']) + config['order_suffix']
 
-class Orders_Handler:
+class OrdersHandler:
     """
     Orders Handler class.
     Manages collection of orders.
     """
-    _ORDERS_PATH = get_dir()
+    __ORDERS_PATH = get_dir()
     
     def __new__(cls, *args):
         if cls._instance is None:
@@ -56,7 +59,21 @@ class Orders_Handler:
         
         
     def filter_by_date(self, start_date, end_date) -> list[Order]:
-        pass
+        targets = []
+        for entry in listdir(self.__ORDERS_PATH):
+            full_path = join(self.__ORDERS_PATH, entry)
+            if not isfile(full_path):
+                continue
+                
+            with open(full_path, "rb") as file:
+                order = pickle.load(file)
+            
+            if order.due_date >= start_date and order.due_date <= end_date:
+                targets.append(order)
+                
+        return targets
+                
+                
         
     def filter_by_vehicle(self, vehicle: Vehicle) -> set[Order]:
         return vehicle.cargo
@@ -65,7 +82,19 @@ class Orders_Handler:
         return repository.inventory
         
     def filter_delayed(self) -> list[Order]:
-        pass
+        targets = []
+        for entry in listdir(self.__ORDERS_PATH):
+            full_path = join(self.__ORDERS_PATH, entry)
+            if not isfile(full_path):
+                continue
+                
+            with open(full_path, "rb") as file:
+                order = pickle.load(file)
+                
+            if order.due_date <= datetime.now(ZoneInfo("Asia/Taipei")).date():
+                targets.append(order)
+                
         
-    def log(self, order_ID: str, event_type: str, description: list):
-        pass
+    def log(self, order_ID: str, *entry_args):
+        self.get(order_ID).new_log(*entry_args)
+        
