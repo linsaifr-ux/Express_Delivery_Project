@@ -172,7 +172,7 @@ class Order:
     @property
     def fee(self) -> float:
         if self._fee is None:
-            self.calc_fee()
+            self._fee = self.calc_fee()
         return self._fee
     
     @property
@@ -222,7 +222,8 @@ class Order:
         SizeClass : Enum defining size classifications and fee values.
         WeightClass : Enum defining weight classifications and fee values.
         """
-        def distance_factor():
+        def distance_factor(origin, destination):
+            # TODO: Calculate actual distance factor based on origin/destination
             return 1
         total = ((self.service.value * distance_factor(self.origin, self.destination))
                  + max(self.size_class.value, self.weight_class.value)
