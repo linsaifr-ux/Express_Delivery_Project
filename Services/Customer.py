@@ -63,7 +63,8 @@ class Customer:
     
     
     def __init__(self, first_name: str, last_name: str, address: Destination,
-                 phone_number: str, password: str, billing_pref: BillingTiming,):
+                 phone_number: str, email: str,password: str, 
+                 billing_pref: BillingTiming,):
         """
         Initialize a new Customer.
 
@@ -77,6 +78,8 @@ class Customer:
             The customer's address.
         phone_number : str
             The customer's phone number (digits and spaces only).
+        email: str
+            The customer' email
         password : str
             The customer's password for authentication.
         billing_pref : BillingTiming
@@ -84,7 +87,7 @@ class Customer:
         bill_cnt : int, optional
             Initial bill count (default is 0).
         """
-        if isfile(join(self.__DATA_PATH, f"{ID}.pkl")):
+        if isfile(join(self.__DATA_PATH, f"C{self._cnt:05d}.pkl")):
             raise ValueError("The ID specified is taken. Maybe use 'from_ID' to unpickle it?")
         
         self._ID = f"C{self._cnt:05d}"
@@ -97,9 +100,10 @@ class Customer:
         # This line invokes the logic defined in @number.setter
         self.number = phone_number
         
+        self._email = email
         self._password = password
         self._billing_pref = billing_pref
-        self._bill_cnt = bill_cnt
+        self._bill_cnt = 0
         self._bill: dict[Bill] = {}
         self._cnt += 1
         
@@ -134,6 +138,10 @@ class Customer:
             if not (char.isdigit() or char == " "):
                 raise ValueError(f"phone_number contains invalid character '{char}'.")
         self._number = phone_number
+    
+    @property
+    def email(self) -> str:
+        return self._email
     
     @property
     def billing_pref(self) -> BillingTiming:
@@ -183,7 +191,7 @@ class Customer:
         """
         if not isinstance(new_pref, BillingTiming):
             raise TypeError("Invalid choice of billing preferrece!")
-        self.__billing_pref = new_pref
+        self._billing_pref = new_pref
         
     def my_orders(self) -> list[Order]:
         """
@@ -309,12 +317,7 @@ class Customer:
         """        
         with open(join(self.__DATA_PATH, f"{self.ID}.pkl"), 'wb') as file:
             pickle.dump(self, file, protocol=4)
-        return
-    
-    def __del__(self):
-        self.save()
-        return
-    
+        return    
     
     @classmethod
     def from_ID(cls, ID: str) -> Customer:
@@ -349,8 +352,8 @@ if __name__ == "__main__":
             print(f"❌ Pickle Error found: {e}")
 
     # Run it on your customer
-    c = Customer(5, "Samuel", "Lai", "address", "12345", "0000", BillingTiming.in_advance)
+    c = Customer("Samuel", "Lai", "address", "12345", "0000", BillingTiming.in_advance)
     check_pickleability(c)
     c.save()
-    a = Customer.from_ID('C00005')
+    a = Customer.from_ID(c.ID)
     print(a)
