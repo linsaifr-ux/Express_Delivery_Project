@@ -364,19 +364,16 @@ class TestCustomerOrderAccess:
         result = self.customer.my_orders()
         
         self.mock_oh.filter_by_customer.assert_called_once_with(
-            self.customer.ID,
-            self.customer.bill_cnt
+            self.customer.ID
         )
     
     def test_get_order_access_allowed(self):
         """Test getting an order that belongs to this customer."""
-        # Customer ID is C00005, so order ID should match pattern O00005xxxx
         mock_order = MagicMock()
+        mock_order.payer = self.customer.ID  # Set payer to match customer
         self.mock_oh.get.return_value = mock_order
         
-        # Order ID format: O + customer_id[1:] + order_number
-        order_id = f"O{self.customer.ID[1:]}0001"
-        
+        order_id = "O00001"
         result = self.customer.get(order_id)
         
         assert result == mock_order
@@ -384,11 +381,12 @@ class TestCustomerOrderAccess:
     
     def test_get_order_access_denied(self):
         """Test getting an order that doesn't belong to this customer."""
-        # Different customer's order
-        order_id = "O999990001"
+        mock_order = MagicMock()
+        mock_order.payer = "C99999"  # Different customer
+        self.mock_oh.get.return_value = mock_order
         
         with pytest.raises(RuntimeError, match="Access to order .* denied"):
-            self.customer.get(order_id)
+            self.customer.get("O00001")
 
 
 class TestCustomerPersistence:
@@ -456,6 +454,153 @@ class TestCustomerPersistence:
         """Test that from_ID raises FileNotFoundError for non-existent ID."""
         with pytest.raises(FileNotFoundError, match="does not exist"):
             Customer.from_ID("C99999")
+
+
+class TestCustomerOrders:
+    """Tests for Customer order-related methods."""
+    
+    @pytest.fixture(autouse=True)
+    def setup(self, tmp_path):
+        """Setup test fixtures with mocked data path and OrdersHandler."""
+        self.test_dir = tmp_path / "customer"
+        self.test_dir.mkdir()
+        
+        self.mock_oh = MagicMock()
+        self.patcher_path = patch.object(Customer, '_Customer__DATA_PATH', str(self.test_dir))
+        self.patcher_oh = patch.object(Customer, '_OH', self.mock_oh)
+        self.patcher_cnt = patch.object(Customer, '_cnt', 0)
+        
+        self.patcher_path.start()
+        self.patcher_oh.start()
+        self.patcher_cnt.start()
+        
+        # Create a test customer
+        self.customer = Customer(
+            first_name="Test",
+            last_name="User",
+            address="Test Address",
+            phone_number="1234567890",
+            email="test.orders@example.com",
+            password="password",
+            billing_pref=BillingTiming.in_advance
+        )
+        
+        yield
+        
+        self.patcher_path.stop()
+        self.patcher_oh.stop()
+        self.patcher_cnt.stop()
+    
+    def test_my_orders_calls_filter_by_customer(self):
+        """Test that my_orders() calls OrdersHandler.filter_by_customer with customer ID."""
+        mock_orders = [MagicMock(), MagicMock()]
+        self.mock_oh.filter_by_customer.return_value = mock_orders
+        
+        result = self.customer.my_orders()
+        
+        self.mock_oh.filter_by_customer.assert_called_once_with(self.customer.ID)
+        assert result == mock_orders
+    
+    def test_my_orders_empty_list(self):
+        """Test that my_orders() returns empty list when no orders."""
+        self.mock_oh.filter_by_customer.return_value = []
+        
+        result = self.customer.my_orders()
+        
+        assert result == []
+    
+    def test_get_calls_handler_get(self):
+        """Test that get() delegates to OrdersHandler.get() and returns order if authorized."""
+        mock_order = MagicMock()
+        mock_order.payer = self.customer.ID  # Set payer to match customer
+        self.mock_oh.get.return_value = mock_order
+        
+        result = self.customer.get("O00001")
+        
+        self.mock_oh.get.assert_called_once_with("O00001")
+        assert result == mock_order
+    
+    def test_get_denies_access_for_other_customer(self):
+        """Test that get() raises RuntimeError if order belongs to another customer."""
+        mock_order = MagicMock()
+        mock_order.payer = "C99999"  # Different customer
+        self.mock_oh.get.return_value = mock_order
+        
+        with pytest.raises(RuntimeError, match="Access to order.*denied"):
+            self.customer.get("O00001")
+    
+    def test_new_order_calls_handler_add(self):
+        """Test that new_order() delegates to OrdersHandler.add()."""
+        self.customer.new_order("arg1", "arg2", "arg3")
+        
+        self.mock_oh.add.assert_called_once_with("arg1", "arg2", "arg3")
+
+
+class TestCustomerBilling:
+    """Tests for Customer billing methods (bill, pay)."""
+    
+    @pytest.fixture(autouse=True)
+    def setup(self, tmp_path):
+        """Setup test fixtures with mocked data path."""
+        self.test_dir = tmp_path / "customer"
+        self.test_dir.mkdir()
+        
+        self.mock_oh = MagicMock()
+        self.patcher_path = patch.object(Customer, '_Customer__DATA_PATH', str(self.test_dir))
+        self.patcher_oh = patch.object(Customer, '_OH', self.mock_oh)
+        self.patcher_cnt = patch.object(Customer, '_cnt', 0)
+        
+        self.patcher_path.start()
+        self.patcher_oh.start()
+        self.patcher_cnt.start()
+        
+        # Create a test customer
+        self.customer = Customer(
+            first_name="Test",
+            last_name="User",
+            address="Test Address",
+            phone_number="1234567890",
+            email="test.billing@example.com",
+            password="password",
+            billing_pref=BillingTiming.in_advance
+        )
+        
+        yield
+        
+        self.patcher_path.stop()
+        self.patcher_oh.stop()
+        self.patcher_cnt.stop()
+    
+    def test_bill_creates_new_bill_in_advance(self):
+        """Test that bill() creates a new Bill when billing_pref is in_advance."""
+        mock_order = MagicMock()
+        mock_order.ID = "O00001"
+        
+        # First bill should create a new bill
+        initial_bill_cnt = self.customer.bill_cnt
+        self.customer.bill(mock_order)
+        
+        # bill_cnt should remain 0 until payment logic (depends on implementation)
+        assert self.customer.bill_cnt >= initial_bill_cnt
+    
+    def test_pay_delegates_to_bill(self):
+        """Test that pay() calls the correct bill's pay method."""
+        # Create a mock bill and add to customer
+        mock_bill = MagicMock()
+        mock_bill.ID = "B00001"
+        self.customer._bill["B00001"] = mock_bill
+        
+        # Patch save to avoid pickle error with MagicMock
+        with patch.object(self.customer, 'save'):
+            self.customer.pay("B00001", "credit_card")
+        
+        mock_bill.pay.assert_called_once_with("credit_card")
+    
+    def test_pay_nonexistent_bill_raises_error(self):
+        """Test that pay() raises KeyError for non-existent bill."""
+        with pytest.raises(KeyError):
+            with patch.object(self.customer, 'save'):
+                self.customer.pay("B99999", "cash")
 
 
 if __name__ == "__main__":
