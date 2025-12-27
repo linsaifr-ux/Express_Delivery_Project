@@ -58,7 +58,6 @@ class Customer:
     """
     ## Class attribute
     __DATA_PATH = get_dir()
-    _OH = OrdersHandler()
     _cnt = len(listdir(__DATA_PATH))
     
     
@@ -229,7 +228,7 @@ class Customer:
         list[Order]
             A list of Order objects associated with this customer.
         """
-        return self._OH.filter_by_customer(self.ID)
+        return OrdersHandler().filter_by_customer(self.ID)
     
     def get(self, order_ID: str) -> Order:
         """
@@ -250,7 +249,7 @@ class Customer:
         RuntimeError
             If the customer does not have access to the requested order.
         """
-        order = self._OH.get(order_ID)
+        order = OrdersHandler().get(order_ID)
         if order.payer != self.ID:
             raise RuntimeError(f"Access to order ({order_ID}) denied!")
         return order
@@ -334,7 +333,7 @@ class Customer:
         -------
         None
         """
-        self._OH.add(*order_args)
+        OrdersHandler().add(*order_args)
         
     def save(self) -> None:
         """
@@ -381,7 +380,7 @@ if __name__ == "__main__":
     c = Customer("Samuel", "Lai", 
                  "address", 
                  "0912 345 678", 
-                 "test@gmail.com",
+                 "xxxx@gmail.com",
                  "0000", 
                  BillingTiming.in_advance)
     check_pickleability(c)
