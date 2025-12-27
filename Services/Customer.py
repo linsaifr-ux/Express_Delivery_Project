@@ -81,12 +81,7 @@ class Customer:
             The customer's password for authentication.
         billing_pref : BillingTiming
             The customer's billing preference.
-        bill_cnt : int, optional
-            Initial bill count (default is 0).
         """
-        if isfile(join(self.__DATA_PATH, f"{ID}.pkl")):
-            raise ValueError("The ID specified is taken. Maybe use 'from_ID' to unpickle it?")
-        
         self._ID = f"C{self._cnt:05d}"
         self._first_name = first_name
         self._last_name = last_name
@@ -99,7 +94,7 @@ class Customer:
         
         self._password = password
         self._billing_pref = billing_pref
-        self._bill_cnt = bill_cnt
+        self._bill_cnt = 0
         self._bill: dict[Bill] = {}
         self._cnt += 1
         
@@ -349,7 +344,7 @@ if __name__ == "__main__":
             print(f"❌ Pickle Error found: {e}")
 
     # Run it on your customer
-    c = Customer(5, "Samuel", "Lai", "address", "12345", "0000", BillingTiming.in_advance)
+    c = Customer("Samuel", "Lai", "address", "12345", "0000", BillingTiming.in_advance)
     check_pickleability(c)
     c.save()
     a = Customer.from_ID('C00005')
