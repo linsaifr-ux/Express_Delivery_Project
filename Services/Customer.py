@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from __future__ import annotations
 """
 Created on Wed Dec 10 21:26:22 2025
@@ -16,6 +17,14 @@ from os.path import isfile, join
 
 
 def get_dir() -> str:
+    """
+    Get the data directory path for storing customer data.
+    
+    Returns
+    -------
+    str
+        The full path to the customer data directory.
+    """
     with open('config.json', 'r', encoding='utf-8') as file:
         config = json.load(file)
         
@@ -23,6 +32,29 @@ def get_dir() -> str:
 
 class Customer:
     """
+    Represents a customer in the package delivery system, managing their
+    personal information, orders, and billing.
+
+    Attributes:
+        ID (str): The unique identifier for the customer.
+        first_name (str): The customer's first name.
+        last_name (str): The customer's last name.
+        address (Destination): The customer's address.
+        number (str): The customer's phone number.
+        billing_pref (BillingTiming): The customer's billing preference.
+        bill_cnt (int): The count of bills associated with this customer.
+
+    Methods:
+        verify(password): Verify if the provided password matches.
+        set_billing_pref(new_pref): Update the customer's billing preference.
+        my_orders(): Get all orders belonging to this customer.
+        get(order_ID): Get a specific order by ID.
+        filter_by_date(start_date, end_date): Filter orders by date range.
+        bill(order): Create or add to a bill for an order.
+        pay(bill_ID, *pay_args): Process payment for a bill.
+        new_order(*order_args): Create a new order.
+        save(): Save the customer data to local storage.
+        from_ID(ID): Class method to load a customer from stored data.
     """
     ## Class attribute
     __DATA_PATH = get_dir()
@@ -31,8 +63,27 @@ class Customer:
     
     
     def __init__(self, first_name: str, last_name: str, address: Destination,
-                 phone_number: str, password: str, billing_pref: BillingTiming,
-                 bill_cnt: int = 0):
+                 phone_number: str, password: str, billing_pref: BillingTiming,):
+        """
+        Initialize a new Customer.
+
+        Parameters
+        ----------
+        first_name : str
+            The customer's first name.
+        last_name : str
+            The customer's last name.
+        address : Destination
+            The customer's address.
+        phone_number : str
+            The customer's phone number (digits and spaces only).
+        password : str
+            The customer's password for authentication.
+        billing_pref : BillingTiming
+            The customer's billing preference.
+        bill_cnt : int, optional
+            Initial bill count (default is 0).
+        """
         if isfile(join(self.__DATA_PATH, f"{ID}.pkl")):
             raise ValueError("The ID specified is taken. Maybe use 'from_ID' to unpickle it?")
         
@@ -102,23 +153,93 @@ class Customer:
                 + f"Billing Preferrence\t: {self.billing_pref.name}")
     
     def verify(self, password: str) -> bool:
+        """
+        Verify if the provided password matches the customer's password.
+
+        Parameters
+        ----------
+        password : str
+            The password to verify.
+
+        Returns
+        -------
+        bool
+            True if the password matches, False otherwise.
+        """
         return self._password == password
     
     def set_billing_pref(self, new_pref: BillingTiming) -> None:
+        """
+        Update the customer's billing preference.
+
+        Parameters
+        ----------
+        new_pref : BillingTiming
+            The new billing preference.
+
+        Returns
+        -------
+        None
+        """
         if not isinstance(new_pref, BillingTiming):
             raise TypeError("Invalid choice of billing preferrece!")
         self.__billing_pref = new_pref
         
     def my_orders(self) -> list[Order]:
+        """
+        Get all orders belonging to this customer.
+
+        Parameters
+        ----------
+        None
+
+        Returns
+        -------
+        list[Order]
+            A list of Order objects associated with this customer.
+        """
         return self._OH.filter_by_customer(self.ID, self.bill_cnt)
     
     def get(self, order_ID: str) -> Order:
+        """
+        Get a specific order by its ID.
+
+        Parameters
+        ----------
+        order_ID : str
+            The ID of the order to retrieve.
+
+        Returns
+        -------
+        Order
+            The requested Order object.
+
+        Raises
+        ------
+        RuntimeError
+            If the customer does not have access to the requested order.
+        """
         if self.ID[1:] == order_ID[1:6]:
             return self._OH.get(order_ID)
         else:
             raise RuntimeError(f"Access to order ({order_ID}) denied!")
             
     def filter_by_date(self, start_date, end_date) -> list[Order]:
+        """
+        Filter orders by the due date.
+
+        Parameters
+        ----------
+        start_date : date
+            The start date of the range (inclusive).
+        end_date : date
+            The end date of the range (inclusive).
+
+        Returns
+        -------
+        list[Order]
+            A list of orders within the specified date range.
+        """
         targets = []
         for order in self.my_orders():
             if order.due_date >= start_date and order.due_date <= end_date:
@@ -127,6 +248,18 @@ class Customer:
         return targets
     
     def bill(self, order: Order) -> None:
+        """
+        Create or add to a bill for an order.
+
+        Parameters
+        ----------
+        order : Order
+            The order to be billed.
+
+        Returns
+        -------
+        None
+        """
         if order.bill_ref is not None:
             return
         
@@ -138,9 +271,35 @@ class Customer:
             self._bill.values()[-1].add_item(order)
         
     def pay(self, bill_ID: str, *pay_args) -> None:
+        """
+        Process payment for a bill.
+
+        Parameters
+        ----------
+        bill_ID : str
+            The ID of the bill to pay.
+        *pay_args
+            Additional arguments passed to the bill's pay method.
+
+        Returns
+        -------
+        None
+        """
         self._bill[bill_ID].pay(*pay_args)
     
     def new_order(self, *order_args):
+        """
+        Create a new order.
+
+        Parameters
+        ----------
+        *order_args
+            Arguments passed to the OrdersHandler add method.
+
+        Returns
+        -------
+        None
+        """
         self._OH.add(*order_args)
         
     def save(self) -> None:
@@ -161,7 +320,7 @@ class Customer:
     def from_ID(cls, ID: str) -> Customer:
         """
         This is a factory method that would reconstruct the customer instance 
-        base on <ID>.json in local directory.
+        base on <ID>.pkl in local directory.
         
         Parameters
         ----------
