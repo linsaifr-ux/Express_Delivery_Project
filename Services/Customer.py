@@ -55,6 +55,8 @@ class Customer:
         new_order(*order_args): Create a new order.
         save(): Save the customer data to local storage.
         from_ID(ID): Class method to load a customer from stored data.
+        email_index(): Class method to get the email-to-ID index dict.
+        from_email(email): Class method to load a customer by email.
     """
     ## Class attribute
     __DATA_PATH = get_dir()
@@ -367,6 +369,32 @@ class Customer:
             instance = pickle.load(file)
         
         return instance
+    
+    @classmethod
+    def email_index(cls) -> dict:
+        """
+        Load and return the email-to-ID index.
+        
+        Returns
+        -------
+        dict
+            Mapping of email addresses to customer IDs.
+            Returns empty dict if index doesn't exist.
+        """
+        index_path = join(cls.__DATA_PATH, 'email_index.json')
+        if not isfile(index_path):
+            return {}
+        with open(index_path, 'r', encoding='utf-8') as f:
+            return json.load(f)
+        
+    @classmethod
+    def from_email(cls, email: str) -> Customer:
+        """Load customer by email. Raises ValueError if not found."""
+        index = cls.email_index()
+        customer_id = index.get(email)
+        if not customer_id:
+            raise ValueError(f"No customer with email: {email}")
+        return cls.from_ID(customer_id)
         
 if __name__ == "__main__":
     def check_pickleability(obj):

@@ -456,6 +456,74 @@ class TestCustomerPersistence:
             Customer.from_ID("C99999")
 
 
+class TestCustomerEmailIndex:
+    """Tests for Customer email_index and from_email class methods."""
+    
+    @pytest.fixture(autouse=True)
+    def setup(self, tmp_path):
+        """Setup test fixtures with mocked data path."""
+        self.test_dir = tmp_path / "customer"
+        self.test_dir.mkdir()
+        
+        self.patcher_path = patch.object(Customer, '_Customer__DATA_PATH', str(self.test_dir))
+        self.patcher_oh = patch('Customer.OrdersHandler')
+        self.patcher_cnt = patch.object(Customer, '_cnt', 0)
+        
+        self.patcher_path.start()
+        self.patcher_oh.start()
+        self.patcher_cnt.start()
+        
+        yield
+        
+        self.patcher_path.stop()
+        self.patcher_oh.stop()
+        self.patcher_cnt.stop()
+    
+    def test_email_index_returns_empty_dict_when_no_file(self):
+        """Test that email_index returns empty dict when index file doesn't exist."""
+        result = Customer.email_index()
+        
+        assert result == {}
+    
+    def test_email_index_returns_dict_from_file(self):
+        """Test that email_index returns dict from existing file."""
+        # Create an email index file
+        import json
+        index_path = self.test_dir / "email_index.json"
+        test_index = {"test@example.com": "C00001", "other@example.com": "C00002"}
+        with open(index_path, 'w', encoding='utf-8') as f:
+            json.dump(test_index, f)
+        
+        result = Customer.email_index()
+        
+        assert result == test_index
+        assert result["test@example.com"] == "C00001"
+    
+    def test_from_email_loads_customer(self):
+        """Test that from_email loads a customer by email."""
+        # Create a customer (this creates the email index entry)
+        customer = Customer(
+            first_name="Email",
+            last_name="Test",
+            address="123 Email St",
+            phone_number="1234567890",
+            email="loadme@example.com",
+            password="password",
+            billing_pref=BillingTiming.in_advance
+        )
+        customer.save()
+        
+        loaded = Customer.from_email("loadme@example.com")
+        
+        assert loaded.ID == customer.ID
+        assert loaded.email == "loadme@example.com"
+    
+    def test_from_email_nonexistent_raises_error(self):
+        """Test that from_email raises ValueError for non-existent email."""
+        with pytest.raises(ValueError, match="No customer with email"):
+            Customer.from_email("nonexistent@example.com")
+
+
 class TestCustomerOrders:
     """Tests for Customer order-related methods."""
     
