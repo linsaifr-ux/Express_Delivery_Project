@@ -158,6 +158,7 @@ class Customer:
                 + f"ID\t\t: {self.ID}\n"
                 + f"Address\t: {self.address}\n"
                 + f"Phone Number\t: {self.number}\n"
+                + f"Email\t: {self.email}\n"
                 + f"Billing Preferrence\t: {self.billing_pref.name}")
     
     def verify(self, password: str) -> bool:
@@ -352,7 +353,12 @@ if __name__ == "__main__":
             print(f"❌ Pickle Error found: {e}")
 
     # Run it on your customer
-    c = Customer("Samuel", "Lai", "address", "12345", "0000", BillingTiming.in_advance)
+    c = Customer("Samuel", "Lai", 
+                 "address", 
+                 "0912 345 678", 
+                 "test@gmail.com",
+                 "0000", 
+                 BillingTiming.in_advance)
     check_pickleability(c)
     c.save()
     a = Customer.from_ID(c.ID)
