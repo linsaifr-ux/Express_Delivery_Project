@@ -155,7 +155,7 @@ class Order:
     
     @property
     def due_date(self) -> date:
-        return self._collection_day.date()
+        return self._due_day.date()
     
     @property
     def origin(self) -> Location:
