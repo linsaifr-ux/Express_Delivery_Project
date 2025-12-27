@@ -5,6 +5,9 @@ Created on Wed Dec 12 15:21:22 2025
 
 @author: Frank
 """
+import pickle
+from os.path import isfile
+
 class Package:
     """
     Package class.
