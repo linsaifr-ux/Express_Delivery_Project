@@ -24,7 +24,7 @@ class TestCustomerInit:
         
         # Mock the data path and OrdersHandler
         self.patcher_path = patch.object(Customer, '_Customer__DATA_PATH', str(self.test_dir))
-        self.patcher_oh = patch.object(Customer, '_OH', MagicMock())
+        self.patcher_oh = patch('Customer.OrdersHandler')
         self.patcher_cnt = patch.object(Customer, '_cnt', 0)
         
         self.patcher_path.start()
@@ -125,7 +125,7 @@ class TestCustomerProperties:
         self.test_dir.mkdir()
         
         self.patcher_path = patch.object(Customer, '_Customer__DATA_PATH', str(self.test_dir))
-        self.patcher_oh = patch.object(Customer, '_OH', MagicMock())
+        self.patcher_oh = patch('Customer.OrdersHandler')
         self.patcher_cnt = patch.object(Customer, '_cnt', 0)
         
         self.patcher_path.start()
@@ -176,7 +176,7 @@ class TestCustomerVerify:
         self.test_dir.mkdir()
         
         self.patcher_path = patch.object(Customer, '_Customer__DATA_PATH', str(self.test_dir))
-        self.patcher_oh = patch.object(Customer, '_OH', MagicMock())
+        self.patcher_oh = patch('Customer.OrdersHandler')
         self.patcher_cnt = patch.object(Customer, '_cnt', 0)
         
         self.patcher_path.start()
@@ -222,7 +222,7 @@ class TestCustomerBillingPreference:
         self.test_dir.mkdir()
         
         self.patcher_path = patch.object(Customer, '_Customer__DATA_PATH', str(self.test_dir))
-        self.patcher_oh = patch.object(Customer, '_OH', MagicMock())
+        self.patcher_oh = patch('Customer.OrdersHandler')
         self.patcher_cnt = patch.object(Customer, '_cnt', 0)
         
         self.patcher_path.start()
@@ -272,7 +272,7 @@ class TestCustomerStr:
         self.test_dir.mkdir()
         
         self.patcher_path = patch.object(Customer, '_Customer__DATA_PATH', str(self.test_dir))
-        self.patcher_oh = patch.object(Customer, '_OH', MagicMock())
+        self.patcher_oh = patch('Customer.OrdersHandler')
         self.patcher_cnt = patch.object(Customer, '_cnt', 0)
         
         self.patcher_path.start()
@@ -334,7 +334,7 @@ class TestCustomerOrderAccess:
         self.mock_oh = MagicMock()
         
         self.patcher_path = patch.object(Customer, '_Customer__DATA_PATH', str(self.test_dir))
-        self.patcher_oh = patch.object(Customer, '_OH', self.mock_oh)
+        self.patcher_oh = patch('Customer.OrdersHandler', return_value=self.mock_oh)
         self.patcher_cnt = patch.object(Customer, '_cnt', 5)
         
         self.patcher_path.start()
@@ -399,7 +399,7 @@ class TestCustomerPersistence:
         self.test_dir.mkdir()
         
         self.patcher_path = patch.object(Customer, '_Customer__DATA_PATH', str(self.test_dir))
-        self.patcher_oh = patch.object(Customer, '_OH', MagicMock())
+        self.patcher_oh = patch('Customer.OrdersHandler')
         self.patcher_cnt = patch.object(Customer, '_cnt', 0)
         
         self.patcher_path.start()
@@ -467,7 +467,7 @@ class TestCustomerOrders:
         
         self.mock_oh = MagicMock()
         self.patcher_path = patch.object(Customer, '_Customer__DATA_PATH', str(self.test_dir))
-        self.patcher_oh = patch.object(Customer, '_OH', self.mock_oh)
+        self.patcher_oh = patch('Customer.OrdersHandler', return_value=self.mock_oh)
         self.patcher_cnt = patch.object(Customer, '_cnt', 0)
         
         self.patcher_path.start()
@@ -547,7 +547,7 @@ class TestCustomerBilling:
         
         self.mock_oh = MagicMock()
         self.patcher_path = patch.object(Customer, '_Customer__DATA_PATH', str(self.test_dir))
-        self.patcher_oh = patch.object(Customer, '_OH', self.mock_oh)
+        self.patcher_oh = patch('Customer.OrdersHandler', return_value=self.mock_oh)
         self.patcher_cnt = patch.object(Customer, '_cnt', 0)
         
         self.patcher_path.start()
