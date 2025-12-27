@@ -107,6 +107,22 @@ class Customer:
         self._bill: dict[Bill] = {}
         self._cnt += 1
         
+        # Register email in the email index for login lookup
+        index_path = join(self.__DATA_PATH, 'email_index.json')
+        if isfile(index_path):
+            with open(index_path, 'r', encoding='utf-8') as f:
+                email_index = json.load(f)
+        else:
+            email_index = {}
+        
+        # Check for duplicate email
+        if email in email_index:
+            raise ValueError(f"Email '{email}' is already registered!")
+        
+        email_index[email] = self._ID
+        with open(index_path, 'w', encoding='utf-8') as f:
+            json.dump(email_index, f, indent=2)
+        
         
     @property
     def first_name(self) -> str:
