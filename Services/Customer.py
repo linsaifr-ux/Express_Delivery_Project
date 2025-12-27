@@ -66,7 +66,7 @@ class Customer:
                  phone_number: str, email: str,password: str, 
                  billing_pref: BillingTiming,):
         """
-        Initialize a new Customer.
+        Initialize a new Customer and create customer's data file in local storage.
 
         Parameters
         ----------
@@ -122,6 +122,9 @@ class Customer:
         email_index[email] = self._ID
         with open(index_path, 'w', encoding='utf-8') as f:
             json.dump(email_index, f, indent=2)
+
+        # Save customer data to local storage
+        self.save()
         
         
     @property
@@ -139,6 +142,7 @@ class Customer:
     @address.setter
     def address(self, new_address):
         self._address = new_address
+        self.save()
         
     @property
     def ID(self) -> str:
@@ -154,6 +158,7 @@ class Customer:
             if not (char.isdigit() or char == " "):
                 raise ValueError(f"phone_number contains invalid character '{char}'.")
         self._number = phone_number
+        self.save()
     
     @property
     def email(self) -> str:
@@ -209,6 +214,7 @@ class Customer:
         if not isinstance(new_pref, BillingTiming):
             raise TypeError("Invalid choice of billing preferrece!")
         self._billing_pref = new_pref
+        self.save()
         
     def my_orders(self) -> list[Order]:
         """
@@ -294,6 +300,8 @@ class Customer:
             self._bill[my_bill.ID] = my_bill
         else:
             self._bill.values()[-1].add_item(order)
+
+        self.save()
         
     def pay(self, bill_ID: str, *pay_args) -> None:
         """
@@ -311,6 +319,7 @@ class Customer:
         None
         """
         self._bill[bill_ID].pay(*pay_args)
+        self.save()
     
     def new_order(self, *order_args):
         """
