@@ -113,6 +113,7 @@ class Order:
         self._status = Status.normal
         self._package = Package(*package_args)
         self._log = [Arrival(collector_ID, origin)]
+        Order.__order_cnt += 1
         
     @property
     def payer(self) -> str:
