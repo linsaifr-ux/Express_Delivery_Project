@@ -14,6 +14,7 @@ try:
     from Location import Destination
     from PaymentArrangement import BillingTiming
     from Order import Service
+    from logger import get_security_logger
 except ImportError as e:
     print(f"Error importing services: {e}")
     sys.exit(1)
@@ -21,7 +22,8 @@ except ImportError as e:
 app = Flask(__name__)
 app.secret_key = 'super_secret_key'
 
-# Initialize OrderHandler
+# Initialize Loggers
+logger = get_security_logger()
 orders_handler = OrdersHandler()
 
 @app.route('/')
@@ -42,11 +44,14 @@ def login():
                     session['user_id'] = staff.ID
                     session['is_staff'] = True
                     flash('Login successful!', 'success')
+                    logger.info(f"LOGIN_SUCCESS | Staff Login | ID={staff.ID}")
                     return redirect(url_for('staff_dashboard'))
                 else:
                     flash('Invalid password', 'error')
+                    logger.warning(f"LOGIN_FAILED | Staff Login | ID={username} | Reason=InvalidPassword")
             except FileNotFoundError:
                 flash('Staff ID not found', 'error')
+                logger.warning(f"LOGIN_FAILED | Staff Login | ID={username} | Reason=NotFound")
         else:
             try:
                 customer = Customer.from_email(username)
@@ -54,13 +59,17 @@ def login():
                     session['user_id'] = customer.ID
                     session['is_staff'] = False
                     flash('Login successful!', 'success')
+                    logger.info(f"LOGIN_SUCCESS | Customer Login | ID={customer.ID}")
                     return redirect(url_for('dashboard'))
                 else:
                     flash('Invalid password', 'error')
+                    logger.warning(f"LOGIN_FAILED | Customer Login | Email={username} | Reason=InvalidPassword")
             except ValueError:
                 flash('Email not registered', 'error')
+                logger.warning(f"LOGIN_FAILED | Customer Login | Email={username} | Reason=NotRegistered")
             except FileNotFoundError:
                 flash('Customer data error', 'error')
+                logger.error(f"LOGIN_ERROR | Customer Login | Email={username} | Reason=DataCorrupt")
 
     return render_template('login.html')
 
@@ -122,16 +131,20 @@ def register():
                 )
             
             flash('Registration successful! Please login.', 'success')
+            logger.info(f"REGISTER_SUCCESS | ID={new_customer.ID} | Email={email} | Type={customer_type}")
             return redirect(url_for('login'))
         except Exception as e:
             flash(f'Registration failed: {e}', 'error')
+            logger.warning(f"REGISTER_FAILED | Email={email} | Error={str(e)}")
 
     return render_template('register.html')
 
 @app.route('/logout')
 def logout():
+    user_id = session.get('user_id', 'Unknown')
     session.clear()
     flash('You have been logged out.', 'info')
+    logger.info(f"LOGOUT | ID={user_id}")
     return redirect(url_for('index'))
 
 @app.route('/dashboard')
@@ -240,12 +253,15 @@ def new_order():
             )
             
             flash(f"Order created successfully! ID: {order_id}", "success")
+            logger.info(f"ORDER_CREATED | ID={order_id} | User={session['user_id']} | Service={service_str}")
             return redirect(url_for('dashboard'))
             
         except ValueError as e:
             flash(f"Order creation failed: {e}", "error")
+            logger.warning(f"ORDER_FAILED | User={session.get('user_id')} | Error={str(e)}")
         except Exception as e:
             flash(f"An error occurred: {e}", "error")
+            logger.error(f"ORDER_ERROR | User={session.get('user_id')} | Error={str(e)}")
 
     return render_template('new_order.html')
 
