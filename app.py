@@ -7,12 +7,13 @@ import datetime
 sys.path.append(os.path.join(os.path.dirname(__file__), 'Services'))
 
 try:
-    from Services.OrderHandler import OrdersHandler
-    from Services.Customer import Customer
-    from Services.Staff import Staff, Driver, RepoStaff, Management, CSStaff
-    from Services.CustomerTypes import Normal, Contracted, Sponsored
-    from Services.Location import Destination
-    from Services.PaymentArrangement import BillingTiming
+    from OrderHandler import OrdersHandler
+    from Customer import Customer
+    from Staff import Staff, Driver, RepoStaff, Management, CSStaff
+    from CustomerTypes import Normal, Contracted, Sponsored
+    from Location import Destination
+    from PaymentArrangement import BillingTiming
+    from Order import Service
 except ImportError as e:
     print(f"Error importing services: {e}")
     sys.exit(1)
@@ -155,13 +156,68 @@ def order_status(order_id):
         flash(f"Order {order_id} not found or error occurred.", "error")
         return redirect(url_for('track'))
 
-@app.route('/new_order')
+@app.route('/new_order', methods=['GET', 'POST'])
 def new_order():
     if not session.get('user_id') or session.get('is_staff'):
         return redirect(url_for('login'))
-    # TODO: Implement full order creation form and logic
-    flash("New Order feature not fully implemented in web UI yet.", "info")
-    return redirect(url_for('dashboard'))
+    
+    if request.method == 'POST':
+        try:
+            # Extract form data
+            service_str = request.form.get('service')
+            bill_timing_str = request.form.get('bill_timing')
+            origin_str = request.form.get('origin')
+            dest_str = request.form.get('destination')
+            is_international = request.form.get('is_international') == 'on'
+            
+            length = int(request.form.get('length'))
+            width = int(request.form.get('width'))
+            height = int(request.form.get('height'))
+            weight = float(request.form.get('weight'))
+            value = float(request.form.get('value'))
+            description = request.form.get('description')
+            is_dangerous = request.form.get('is_dangerous') == 'on'
+            is_fragile = request.form.get('is_fragile') == 'on'
+            
+            # Create objects
+            service = getattr(Service, service_str)
+            bill_timing = getattr(BillingTiming, bill_timing_str)
+            origin = Destination(origin_str)
+            destination = Destination(dest_str)
+            package_size = (length, width, height)
+            
+            customer = Customer.from_ID(session['user_id'])
+            
+            # Place Order
+            # Arguments for Order: bill_timing, service, origin, destination, collector_ID, is_international
+            # Arguments for Package: size, weight, value, content_description, is_dangerous, is_fragile
+            
+            # Note: collector_ID is set to "Pending" initially
+            order_id = customer.new_order(
+                bill_timing,
+                service,
+                origin,
+                destination,
+                "Pending",
+                is_international,
+                # Package args
+                package_size,
+                weight,
+                value,
+                description,
+                is_dangerous,
+                is_fragile
+            )
+            
+            flash(f"Order created successfully! ID: {order_id}", "success")
+            return redirect(url_for('dashboard'))
+            
+        except ValueError as e:
+            flash(f"Order creation failed: {e}", "error")
+        except Exception as e:
+            flash(f"An error occurred: {e}", "error")
+
+    return render_template('new_order.html')
 
 if __name__ == '__main__':
     app.run(debug=True)

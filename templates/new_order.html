@@ -1,0 +1,91 @@
+{% extends 'base.html' %}
+
+{% block title %}New Order - Express Delivery{% endblock %}
+
+{% block content %}
+<div class="card" style="max-width: 600px; margin: 0 auto;">
+    <h2 style="text-align: center;">Create New Order</h2>
+    <form action="{{ url_for('new_order') }}" method="POST">
+        <h3>Shipment Details</h3>
+        <div class="form-group">
+            <label for="service">Service Type</label>
+            <select name="service" id="service" style="width: 100%; padding: 10px;">
+                <option value="standard">Standard (7 days)</option>
+                <option value="express">Express (2 days)</option>
+                <option value="over_night">Over Night (1 day)</option>
+                <option value="economy">Economy (14 days)</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label for="bill_timing">Billing Timing</label>
+            <select name="bill_timing" id="bill_timing" style="width: 100%; padding: 10px;">
+                <option value="in_advance">In Advance</option>
+                <option value="on_delivery">On Delivery</option>
+                <option value="monthly">Monthly</option>
+            </select>
+            <small style="color: grey;">Note: Some options may not be available for your account type.</small>
+        </div>
+
+        <div class="form-group">
+            <label for="origin">Origin Address</label>
+            <input type="text" id="origin" name="origin" required>
+        </div>
+
+        <div class="form-group">
+            <label for="destination">Destination Address</label>
+            <input type="text" id="destination" name="destination" required>
+        </div>
+
+        <div class="form-group">
+            <label>
+                <input type="checkbox" name="is_international"> International Shipment
+            </label>
+        </div>
+
+        <h3>Package Details</h3>
+        <div style="display: flex; gap: 10px;">
+            <div class="form-group" style="flex: 1;">
+                <label for="length">Length (cm)</label>
+                <input type="number" id="length" name="length" required min="1">
+            </div>
+            <div class="form-group" style="flex: 1;">
+                <label for="width">Width (cm)</label>
+                <input type="number" id="width" name="width" required min="1">
+            </div>
+            <div class="form-group" style="flex: 1;">
+                <label for="height">Height (cm)</label>
+                <input type="number" id="height" name="height" required min="1">
+            </div>
+        </div>
+
+        <div style="display: flex; gap: 10px;">
+            <div class="form-group" style="flex: 1;">
+                <label for="weight">Weight (kg)</label>
+                <input type="number" id="weight" name="weight" step="0.1" required min="0.1">
+            </div>
+            <div class="form-group" style="flex: 1;">
+                <label for="value">Value ($)</label>
+                <input type="number" id="value" name="value" step="0.01" required min="0">
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label for="description">Content Description</label>
+            <textarea id="description" name="description" rows="3"
+                style="width: 100%; padding: 10px; box-sizing: border-box;" required></textarea>
+        </div>
+
+        <div class="form-group">
+            <label style="margin-right: 15px;">
+                <input type="checkbox" name="is_dangerous"> Dangerous Goods
+            </label>
+            <label>
+                <input type="checkbox" name="is_fragile"> Fragile
+            </label>
+        </div>
+
+        <button type="submit" class="btn" style="width: 100%;">Create Order</button>
+    </form>
+</div>
+{% endblock %}
