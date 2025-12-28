@@ -672,5 +672,129 @@ class TestCustomerBilling:
                 self.customer.pay("B99999", "cash")
 
 
+class TestCustomerNotification:
+    """Tests for Customer notification methods."""
+    
+    @pytest.fixture(autouse=True)
+    def setup(self, tmp_path):
+        """Setup test fixtures with mocked data path."""
+        self.test_dir = tmp_path / "customer"
+        self.test_dir.mkdir()
+        
+        self.patcher_path = patch.object(Customer, '_Customer__DATA_PATH', str(self.test_dir))
+        self.patcher_oh = patch('Customer.OrdersHandler')
+        self.patcher_cnt = patch.object(Customer, '_cnt', 0)
+        
+        self.patcher_path.start()
+        self.patcher_oh.start()
+        self.patcher_cnt.start()
+        
+        self.customer = Customer(
+            first_name="Test",
+            last_name="User",
+            address="Test Address",
+            phone_number="1234567890",
+            email="test.notify@example.com",
+            password="password",
+            billing_pref=BillingTiming.in_advance
+        )
+        
+        yield
+        
+        self.patcher_path.stop()
+        self.patcher_oh.stop()
+        self.patcher_cnt.stop()
+    
+    def test_notification_initially_empty(self):
+        """Test that notification list is initially empty."""
+        assert self.customer.notification == []
+    
+    def test_notify_adds_message(self):
+        """Test that notify() adds a message to notifications."""
+        self.customer.notify("Test message")
+        
+        notifications = self.customer.notification
+        assert len(notifications) == 1
+        assert notifications[0] == "Test message"
+    
+    def test_notify_multiple_messages(self):
+        """Test that multiple notify() calls accumulate messages."""
+        self.customer.notify("Message 1")
+        self.customer.notify("Message 2")
+        self.customer.notify("Message 3")
+        
+        notifications = self.customer.notification
+        assert len(notifications) == 3
+        assert notifications == ["Message 1", "Message 2", "Message 3"]
+    
+    def test_notification_clears_after_read(self):
+        """Test that reading notification clears the list."""
+        self.customer.notify("Message 1")
+        self.customer.notify("Message 2")
+        
+        # First read should return both messages
+        first_read = self.customer.notification
+        assert len(first_read) == 2
+        
+        # Second read should be empty (cleared)
+        second_read = self.customer.notification
+        assert second_read == []
+    
+    def test_notification_returns_copy(self):
+        """Test that notification returns a copy, not the original list."""
+        self.customer.notify("Test message")
+        
+        notifications = self.customer.notification
+        notifications.append("Modified")  # Modify the returned list
+        
+        # Original should be cleared, modification shouldn't affect anything
+        # Next read should still be empty
+        assert self.customer.notification == []
+
+
+class TestCustomerNewOrderReturn:
+    """Tests for Customer new_order return value."""
+    
+    @pytest.fixture(autouse=True)
+    def setup(self, tmp_path):
+        """Setup test fixtures with mocked data path and OrdersHandler."""
+        self.test_dir = tmp_path / "customer"
+        self.test_dir.mkdir()
+        
+        self.mock_oh = MagicMock()
+        self.mock_oh.add.return_value = "O0000000000001"  # Mock order ID
+        
+        self.patcher_path = patch.object(Customer, '_Customer__DATA_PATH', str(self.test_dir))
+        self.patcher_oh = patch('Customer.OrdersHandler', return_value=self.mock_oh)
+        self.patcher_cnt = patch.object(Customer, '_cnt', 0)
+        
+        self.patcher_path.start()
+        self.patcher_oh.start()
+        self.patcher_cnt.start()
+        
+        self.customer = Customer(
+            first_name="Test",
+            last_name="User",
+            address="Test Address",
+            phone_number="1234567890",
+            email="test.order@example.com",
+            password="password",
+            billing_pref=BillingTiming.in_advance
+        )
+        
+        yield
+        
+        self.patcher_path.stop()
+        self.patcher_oh.stop()
+        self.patcher_cnt.stop()
+    
+    def test_new_order_returns_order_id(self):
+        """Test that new_order() returns the order ID."""
+        order_id = self.customer.new_order("arg1", "arg2")
+        
+        assert order_id == "O0000000000001"
+
+
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
+
