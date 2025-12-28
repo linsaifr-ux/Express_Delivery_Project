@@ -322,20 +322,35 @@ class Customer:
         self._bill[bill_ID].pay(*pay_args)
         self.save()
     
-    def new_order(self, *order_args):
+    def new_order(self, *order_args) -> None:
         """
         Create a new order.
 
         Parameters
         ----------
         *order_args
-            Arguments passed to the OrdersHandler add method.
+            Arguments passed to the OrdersHandler add method:
+            
+            bill_timing : BillingTiming
+                When the bill should be issued.
+            service : Service
+                The delivery service type.
+            origin : Location
+                The origin location of the package.
+            destination : Location
+                The destination location of the package.
+            collector_ID : str
+                The ID of the staff collecting the package.
+            is_international : bool
+                Whether this is an international shipment.
+            *package_args : tuple
+                Arguments passed to create the Package.
 
         Returns
         -------
         None
         """
-        OrdersHandler().add(*order_args)
+        OrdersHandler().add(self.ID*order_args)
         
     def save(self) -> None:
         """

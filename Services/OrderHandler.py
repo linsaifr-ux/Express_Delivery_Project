@@ -91,7 +91,24 @@ class OrdersHandler:
         Parameters
         ----------
         *order_args : tuple
-            Arguments passed to the Order constructor.
+            Arguments passed to the Order constructor:
+            
+            customer_ID : str
+                The ID of the customer paying for the order.
+            bill_timing : BillingTiming
+                When the bill should be issued.
+            service : Service
+                The delivery service type.
+            origin : Location
+                The origin location of the package.
+            destination : Location
+                The destination location of the package.
+            collector_ID : str
+                The ID of the staff collecting the package.
+            is_international : bool
+                Whether this is an international shipment.
+            *package_args : tuple
+                Arguments passed to create the Package.
 
         Returns
         -------
