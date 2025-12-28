@@ -33,3 +33,18 @@ def test_register_page(client):
     rv = client.get('/register')
     assert rv.status_code == 200
     assert b'Register' in rv.data
+
+def test_register_post(client):
+    data = {
+        'first_name': 'Test',
+        'last_name': 'User',
+        'email': 'test@example.com',
+        'phone': '0912345678',
+        'address': 'Taipei City',
+        'password': 'password',
+        'billing_pref': 'on_delivery'
+    }
+    rv = client.post('/register', data=data, follow_redirects=True)
+    assert rv.status_code == 200
+    # Check for success message or redirect to login (which shows Login header)
+    assert b'Login' in rv.data or b'Registration successful' in rv.data
