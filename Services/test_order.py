@@ -385,5 +385,136 @@ class TestOrderPersistence:
             Order.from_ID("O9999999999999")
 
 
+class TestDistanceFactor:
+    """Tests for distance factor calculation in calc_fee."""
+    
+    @pytest.fixture(autouse=True)
+    def setup(self, tmp_path):
+        """Setup test fixtures."""
+        from Order import Order
+        
+        self.test_dir = tmp_path / "orders"
+        self.test_dir.mkdir()
+        
+        self.patcher_path = patch.object(Order, '_Order__DATA_PATH', str(self.test_dir))
+        self.patcher_cnt = patch.object(Order, '_Order__order_cnt', 0)
+        
+        self.patcher_path.start()
+        self.patcher_cnt.start()
+        
+        yield
+        
+        self.patcher_path.stop()
+        self.patcher_cnt.stop()
+    
+    def _create_order(self, origin_addr: str, dest_addr: str):
+        """Helper to create an order with specific origin/destination addresses."""
+        from Order import Order, Service
+        from PaymentArrangement import BillingTiming
+        from Location import Destination
+        
+        origin = Destination(origin_addr)
+        dest = Destination(dest_addr)
+        
+        return Order("C00001", BillingTiming.in_advance, Service.economy,
+                     origin, dest, "S001", False,
+                     (1, 1, 1), 0.1, 10.0, "", False, False)
+    
+    def test_same_county_factor(self):
+        """Test that same county returns factor 1.0."""
+        # Same county: 高雄市 -> 高雄市
+        order = self._create_order("高雄市前鎮區中山路", "高雄市苓雅區建國路")
+        
+        # Economy service = 1.0, extra_light weight = 60
+        # Fee = (1.0 * 1.0) + 60 = 61
+        expected_base = 1.0 * 1.0  # service * distance_factor
+        
+        fee = order.fee
+        # Verify distance factor is 1.0 by checking fee calculation
+        assert fee == 1.0 * 1.0 + 60  # service * distance + size/weight
+    
+    def test_same_region_factor(self):
+        """Test that same region returns factor 1.2."""
+        # Same region (南部): 高雄市 -> 台南市
+        order = self._create_order("高雄市前鎮區", "台南市中西區")
+        
+        # Economy service = 1.0, factor = 1.2
+        # Fee = (1.0 * 1.2) + 60 = 61.2
+        assert order.fee == 1.0 * 1.2 + 60
+    
+    def test_different_region_factor(self):
+        """Test that different regions return factor 2.0."""
+        # Different regions: 高雄市 (南部) -> 台北市 (北部)
+        order = self._create_order("高雄市前鎮區", "台北市中正區")
+        
+        # Economy service = 1.0, factor = 2.0
+        # Fee = (1.0 * 2.0) + 60 = 62
+        assert order.fee == 1.0 * 2.0 + 60
+    
+    def test_offshore_island_factor(self):
+        """Test that offshore islands return factor 2.5."""
+        # Offshore: 高雄市 -> 澎湖縣
+        order = self._create_order("高雄市前鎮區", "澎湖縣馬公市")
+        
+        # Economy service = 1.0, factor = 2.5
+        # Fee = (1.0 * 2.5) + 60 = 62.5
+        assert order.fee == 1.0 * 2.5 + 60
+    
+    def test_international_factor(self):
+        """Test that non-Taiwan addresses return factor 3.0."""
+        # International: Unknown address
+        order = self._create_order("高雄市前鎮區", "Tokyo, Japan")
+        
+        # Economy service = 1.0, factor = 3.0
+        # Fee = (1.0 * 3.0) + 60 = 63
+        assert order.fee == 1.0 * 3.0 + 60
+    
+    def test_northern_region_same(self):
+        """Test same region in Northern Taiwan."""
+        # 北部: 台北市 -> 新北市
+        order = self._create_order("台北市信義區", "新北市板橋區")
+        
+        assert order.fee == 1.0 * 1.2 + 60
+    
+    def test_central_region_same(self):
+        """Test same region in Central Taiwan."""
+        # 中部: 台中市 -> 彰化縣
+        order = self._create_order("台中市西區", "彰化縣彰化市")
+        
+        assert order.fee == 1.0 * 1.2 + 60
+    
+    def test_eastern_region(self):
+        """Test Eastern Taiwan region."""
+        # 東部: 花蓮縣 -> 台東縣
+        order = self._create_order("花蓮縣花蓮市", "台東縣台東市")
+        
+        assert order.fee == 1.0 * 1.2 + 60
+    
+    def test_kinmen_offshore(self):
+        """Test Kinmen (金門) offshore island."""
+        # 金門縣 -> 台北市
+        order = self._create_order("金門縣金城鎮", "台北市中正區")
+        
+        # Offshore factor = 2.5
+        assert order.fee == 1.0 * 2.5 + 60
+    
+    def test_matsu_offshore(self):
+        """Test Matsu (連江縣) offshore island."""
+        # 連江縣 -> 高雄市
+        order = self._create_order("連江縣南竿鄉", "高雄市前鎮區")
+        
+        # Offshore factor = 2.5
+        assert order.fee == 1.0 * 2.5 + 60
+    
+    def test_traditional_vs_simplified_taipei(self):
+        """Test both 台北市 and 臺北市 are recognized."""
+        # Both should be same county
+        order1 = self._create_order("台北市信義區", "台北市中正區")
+        order2 = self._create_order("臺北市信義區", "臺北市中正區")
+        
+        assert order1.fee == order2.fee
+        assert order1.fee == 1.0 * 1.0 + 60
+
+
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])

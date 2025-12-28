@@ -202,7 +202,7 @@ class Order:
     ## Methods
     def calc_fee(self) -> float:
         """
-        Calculate the delivery fee based on service, size, weight, and special handling.
+        Calculate the delivery fee based on service, distance, size, weight, and special handling.
 
         Fee Formula
         -----------
@@ -210,6 +210,17 @@ class Order:
                 + max(size_class_fee, weight_class_fee)
                 + dangerous_goods_surcharge (500 if applicable)
                 + fragile_surcharge (100 if applicable)
+
+        Distance Factor
+        ---------------
+        The distance factor is calculated based on Taiwan county/city names
+        (first 3 characters of address):
+        
+        - 1.0 : Same county (e.g., 高雄市 → 高雄市)
+        - 1.2 : Same region (e.g., 高雄市 → 台南市)
+        - 2.0 : Different regions (e.g., 北部 → 南部)
+        - 2.5 : Offshore islands (澎湖縣, 金門縣, 連江縣)
+        - 3.0 : International / Non-Taiwan addresses
 
         Returns
         -------
@@ -222,9 +233,88 @@ class Order:
         SizeClass : Enum defining size classifications and fee values.
         WeightClass : Enum defining weight classifications and fee values.
         """
-        def distance_factor(origin, destination):
-            # TODO: Calculate actual distance factor based on origin/destination
-            return 1
+        def distance_factor(origin: Location, destination: Location) -> float:
+            """
+            Calculate distance factor based on county names (first 3 characters of address).
+            
+            Taiwan is divided into 5 regions:
+            - Region 0: 北部 (Taipei, New Taipei, Keelung, Taoyuan, Hsinchu, Yilan)
+            - Region 1: 中部 (Miaoli, Taichung, Changhua, Nantou, Yunlin)
+            - Region 2: 南部 (Chiayi, Tainan, Kaohsiung, Pingtung)
+            - Region 3: 東部 (Hualien, Taitung)
+            - Region 4: 離島 (Penghu, Kinmen, Matsu)
+            
+            Returns
+            -------
+            float
+                Distance multiplier:
+                - 1.0 : Same county
+                - 2.5 : Offshore islands
+                - 1.2 : Same region, different county
+                - 2.0 : Different regions
+                - 3.0 : International / Non-Taiwan (address not recognized)
+            """
+            # Region mapping: County prefix (first 3 chars) -> region code
+            # Region 0: Northern Taiwan (北部)
+            # Region 1: Central Taiwan (中部)
+            # Region 2: Southern Taiwan (南部)
+            # Region 3: Eastern Taiwan (東部)
+            # Region 4: Offshore Islands (離島)
+            COUNTY_TO_REGION = {
+                # Northern Taiwan (北部) - Region 0
+                "台北市": 0, "臺北市": 0,
+                "新北市": 0,
+                "基隆市": 0,
+                "桃園市": 0,
+                "新竹市": 0, "新竹縣": 0,
+                "宜蘭縣": 0,
+                # Central Taiwan (中部) - Region 1
+                "苗栗縣": 1,
+                "台中市": 1, "臺中市": 1,
+                "彰化縣": 1,
+                "南投縣": 1,
+                "雲林縣": 1,
+                # Southern Taiwan (南部) - Region 2
+                "嘉義市": 2, "嘉義縣": 2,
+                "台南市": 2, "臺南市": 2,
+                "高雄市": 2,
+                "屏東縣": 2,
+                # Eastern Taiwan (東部) - Region 3
+                "花蓮縣": 3,
+                "台東縣": 3, "臺東縣": 3,
+                # Offshore Islands (離島) - Region 4
+                "澎湖縣": 4,
+                "金門縣": 4,
+                "連江縣": 4,
+            }
+            
+            # Extract first 3 characters from address
+            origin_county = str(origin.address)[:3]
+            dest_county = str(destination.address)[:3]
+            
+            # Get region codes (default to region 5 if not found)
+            origin_region = COUNTY_TO_REGION.get(origin_county, 5)
+            dest_region = COUNTY_TO_REGION.get(dest_county, 5)
+            
+            # Not in Taiwan
+            if origin_region == 5 or dest_region == 5:
+                return 3.0
+            
+            # Same county
+            if origin_county == dest_county:
+                return 1.0
+
+            # Offshore islands always have higher factor
+            if origin_region == 4 or dest_region == 4:
+                return 2.5
+            
+            # Same region
+            if origin_region == dest_region:
+                return 1.2          
+            
+            # Different regions
+            return 2.0
+            
         total = ((self.service.value * distance_factor(self.origin, self.destination))
                  + max(self.size_class.value, self.weight_class.value)
                  + int(self._package.is_dangerous) * 500
