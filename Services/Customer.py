@@ -44,6 +44,7 @@ class Customer(ABC):
         last_name (str): The customer's last name.
         address (Destination): The customer's address.
         number (str): The customer's phone number.
+        email(str): The customer's email address
         billing_pref (BillingTiming): The customer's billing preference.
         bill_cnt (int): The count of bills associated with this customer.
         notification (list[str]): Pending notifications (cleared when read).
