@@ -350,7 +350,7 @@ class Customer:
         -------
         None
         """
-        OrdersHandler().add(self.ID*order_args)
+        OrdersHandler().add(self.ID, *order_args)
         
     def save(self) -> None:
         """

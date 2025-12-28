@@ -598,10 +598,11 @@ class TestCustomerOrders:
             self.customer.get("O00001")
     
     def test_new_order_calls_handler_add(self):
-        """Test that new_order() delegates to OrdersHandler.add()."""
+        """Test that new_order() delegates to OrdersHandler.add() with customer ID prepended."""
         self.customer.new_order("arg1", "arg2", "arg3")
         
-        self.mock_oh.add.assert_called_once_with("arg1", "arg2", "arg3")
+        # Customer ID should be automatically prepended by new_order
+        self.mock_oh.add.assert_called_once_with(self.customer.ID, "arg1", "arg2", "arg3")
 
 
 class TestCustomerBilling:
