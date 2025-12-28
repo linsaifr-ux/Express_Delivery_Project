@@ -7,6 +7,7 @@ Created on Wed Dec 10 21:26:22 2025
 """
 from platformdirs import user_data_dir
 import json, pickle
+from abc import ABC, abstractmethod
 from PaymentArrangement import BillingTiming
 from Bill import Bill
 from Location import Destination
@@ -30,10 +31,12 @@ def get_dir() -> str:
         
     return user_data_dir(config['app_name'], config['project_name']) + config['customer_suffix']
 
-class Customer:
+class Customer(ABC):
     """
-    Represents a customer in the package delivery system, managing their
-    personal information, orders, and billing.
+    Abstract base class representing a customer in the package delivery system.
+    
+    This class cannot be instantiated directly. Use one of the concrete
+    subclasses: Normal, Contracted, or Sponsored.
 
     Attributes:
         ID (str): The unique identifier for the customer.
@@ -43,6 +46,7 @@ class Customer:
         number (str): The customer's phone number.
         billing_pref (BillingTiming): The customer's billing preference.
         bill_cnt (int): The count of bills associated with this customer.
+        notification (list[str]): Pending notifications (cleared when read).
 
     Methods:
         verify(password): Verify if the provided password matches.
@@ -52,7 +56,8 @@ class Customer:
         filter_by_date(start_date, end_date): Filter orders by date range.
         bill(order): Create or add to a bill for an order.
         pay(bill_ID, *pay_args): Process payment for a bill.
-        new_order(*order_args): Create a new order.
+        new_order(*order_args): Create a new order and return its ID.
+        notify(notification): Add a notification message to the customer.
         save(): Save the customer data to local storage.
         from_ID(ID): Class method to load a customer from stored data.
         email_index(): Class method to get the email-to-ID index dict.
@@ -105,6 +110,7 @@ class Customer:
         self._password = password
         self._billing_pref = billing_pref
         self._bill_cnt = 0
+        self._notification = []
         self._bill: dict[Bill] = {}
         self._cnt += 1
         
@@ -172,6 +178,23 @@ class Customer:
     @property
     def bill_cnt(self) -> int:
         return self._bill_cnt
+    
+    @property
+    def notification(self) -> list[str]:
+        """
+        Get and clear pending notifications.
+        
+        Returns a copy of all pending notifications and clears them.
+        This ensures notifications are only read once.
+
+        Returns
+        -------
+        list[str]
+            A copy of pending notification messages.
+        """
+        notifications = self._notification.copy()
+        self._notification.clear()
+        return notifications
     
     
     ## Methods
@@ -313,7 +336,12 @@ class Customer:
         bill_ID : str
             The ID of the bill to pay.
         *pay_args
-            Additional arguments passed to the bill's pay method.
+            Additional arguments passed to the bill's pay method:
+            
+            transaction_ID : str
+                The transaction ID.
+            method : PaymentMethod
+                The method of payment.
 
         Returns
         -------
@@ -322,7 +350,7 @@ class Customer:
         self._bill[bill_ID].pay(*pay_args)
         self.save()
     
-    def new_order(self, *order_args) -> None:
+    def new_order(self, *order_args) -> str:
         """
         Create a new order.
 
@@ -348,9 +376,26 @@ class Customer:
 
         Returns
         -------
+        str
+            The ID of the newly created order.
+        """
+        return OrdersHandler().add(self.ID, *order_args)
+    
+    def notify(self, notification: str) -> None:
+        """
+        Add a notification message to the customer's pending notifications.
+
+        Parameters
+        ----------
+        notification : str
+            The notification message to add.
+
+        Returns
+        -------
         None
         """
-        OrdersHandler().add(self.ID, *order_args)
+        self._notification.append(notification)
+        self.save()
         
     def save(self) -> None:
         """
