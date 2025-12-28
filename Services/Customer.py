@@ -94,8 +94,9 @@ class Customer(ABC):
         bill_cnt : int, optional
             Initial bill count (default is 0).
         """
-        if isfile(join(self.__DATA_PATH, f"C{self._cnt:05d}.pkl")):
-            raise ValueError("The ID specified is taken. Maybe use 'from_ID' to unpickle it?")
+        # Collision resolution loop
+        while isfile(join(self.__DATA_PATH, f"C{self._cnt:05d}.pkl")):
+            self.__class__._cnt += 1
         
         self._ID = f"C{self._cnt:05d}"
         self._first_name = first_name

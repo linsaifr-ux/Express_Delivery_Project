@@ -1,0 +1,32 @@
+{% extends 'base.html' %}
+
+{% block title %}Home - Express Delivery{% endblock %}
+
+{% block content %}
+<div class="hero">
+    <h1>Welcome to Express Delivery</h1>
+    <p>Fast, reliable, and secure delivery for all your needs.</p>
+    <div style="margin-top: 30px;">
+        <a href="{{ url_for('track') }}" class="btn">Track Your Package</a>
+        {% if not session.get('user_id') %}
+        <a href="{{ url_for('register') }}" class="btn"
+            style="background-color: var(--secondary-color); margin-left: 10px;">Sign Up Now</a>
+        {% endif %}
+    </div>
+</div>
+
+<div class="features" style="display: flex; justify-content: space-around; margin-top: 50px; flex-wrap: wrap;">
+    <div class="card" style="flex: 1; margin: 10px; text-align: center;">
+        <h3>Fast Shipping</h3>
+        <p>We ensure your packages arrive on time, every time.</p>
+    </div>
+    <div class="card" style="flex: 1; margin: 10px; text-align: center;">
+        <h3>Secure Handling</h3>
+        <p>Your items are handled with the utmost care and security.</p>
+    </div>
+    <div class="card" style="flex: 1; margin: 10px; text-align: center;">
+        <h3>Real-time Tracking</h3>
+        <p>Know exactly where your package is at any moment.</p>
+    </div>
+</div>
+{% endblock %}

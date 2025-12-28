@@ -1,0 +1,30 @@
+{% extends 'base.html' %}
+
+{% block title %}Staff Dashboard - Express Delivery{% endblock %}
+
+{% block content %}
+<h1>Staff Dashboard</h1>
+<div class="card">
+    <h2>Profile</h2>
+    <p><strong>Name:</strong> {{ staff.first_name }} {{ staff.last_name }}</p>
+    <p><strong>ID:</strong> {{ staff.ID }}</p>
+    <p><strong>Position:</strong> {{ staff.position }}</p>
+</div>
+
+<!-- This section will need to be dynamic based on staff type (Driver, RepoStaff, etc.) -->
+<div class="card">
+    <h2>Tasks & Actions</h2>
+    <p>Specific actions for {{ staff.position }} will appear here.</p>
+
+    <!-- Placeholder for specific staff functionalities -->
+    {% if staff.position == 'Driver' %}
+    <h3>Driver Duties</h3>
+    <p><a href="#">View Cargo</a></p>
+    <p><a href="#">Report Delivery</a></p>
+    {% elif staff.position == 'RepoStaff' %}
+    <h3>Repository Management</h3>
+    <p><a href="#">View Inventory</a></p>
+    <p><a href="#">Receive Package</a></p>
+    {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,54 @@
+{% extends 'base.html' %}
+
+{% block title %}Dashboard - Express Delivery{% endblock %}
+
+{% block content %}
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+    <h1>Welcome, {{ customer.first_name }}!</h1>
+    <a href="{{ url_for('new_order') }}" class="btn">New Order</a>
+</div>
+
+<div class="card">
+    <h2>Your Orders</h2>
+    {% if orders %}
+    <table>
+        <thead>
+            <tr>
+                <th>Order ID</th>
+                <th>Date</th>
+                <th>Status</th>
+                <th>Origin</th>
+                <th>Destination</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for order in orders %}
+            <tr>
+                <td>{{ order.ID }}</td>
+                <td>{{ order.creation_date }}</td>
+                <td>{{ order.status }}</td> <!-- Verify this attribute -->
+                <td>{{ order.origin }}</td>
+                <td>{{ order.destination }}</td>
+                <td>
+                    <a href="{{ url_for('order_status', order_id=order.ID) }}" class="btn"
+                        style="padding: 5px 10px; font-size: 0.8rem;">View</a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p>You haven't placed any orders yet.</p>
+    {% endif %}
+</div>
+
+<div class="card">
+    <h2>Account Information</h2>
+    <p><strong>Name:</strong> {{ customer.first_name }} {{ customer.last_name }}</p>
+    <p><strong>Email:</strong> {{ customer.email }}</p>
+    <p><strong>Phone:</strong> {{ customer.number }}</p>
+    <p><strong>Address:</strong> {{ customer.address }}</p>
+    <p><strong>Billing Preference:</strong> {{ customer.billing_pref.name }}</p>
+</div>
+{% endblock %}
