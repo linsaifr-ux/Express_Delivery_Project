@@ -74,22 +74,52 @@ def register():
         address_str = request.form.get('address')
         password = request.form.get('password')
         billing_pref_str = request.form.get('billing_pref')
+        customer_type = request.form.get('customer_type')
 
         try:
             billing_pref = getattr(BillingTiming, billing_pref_str)
             address = Destination(address_str)
             
-            # Default to Normal customer for web registration
-            # In a real app, might want to allow choosing type
-            new_customer = Normal(
-                first_name=first_name,
-                last_name=last_name,
-                address=address,
-                phone_number=phone,
-                email=email,
-                password=password,
-                billing_pref=billing_pref
-            )
+            if customer_type == 'Contracted':
+                account = request.form.get('account')
+                if not account:
+                    raise ValueError("Account number is required for Contracted customers.")
+                new_customer = Contracted(
+                    first_name=first_name,
+                    last_name=last_name,
+                    address=address,
+                    phone_number=phone,
+                    email=email,
+                    password=password,
+                    account=account
+                )
+            elif customer_type == 'Sponsored':
+                sponsor_id = request.form.get('sponsor_id')
+                if not sponsor_id:
+                    raise ValueError("Sponsor ID is required for Sponsored customers.")
+                
+                # Check if sponsor exists and is Contracted (validation done in Sponsored.__init__ but good to catch early)
+                # Sponsored.__init__ signature: (sponsor_ID, first_name, last_name, address, phone_number, email, password, billing_pref)
+                new_customer = Sponsored(
+                    sponsor_id,
+                    first_name,
+                    last_name,
+                    address,
+                    phone,
+                    email,
+                    password,
+                    billing_pref
+                )
+            else: # Default to Normal
+                new_customer = Normal(
+                    first_name=first_name,
+                    last_name=last_name,
+                    address=address,
+                    phone_number=phone,
+                    email=email,
+                    password=password,
+                    billing_pref=billing_pref
+                )
             
             flash('Registration successful! Please login.', 'success')
             return redirect(url_for('login'))
