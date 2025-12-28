@@ -135,6 +135,8 @@ class OrdersHandler:
         with open(index_path, 'w', encoding='utf-8') as f:
             json.dump(order_list, f, indent=2)
             
+        order.save()
+            
         return order.ID
         
     def get(self, order_ID: str) -> Order:
@@ -174,10 +176,13 @@ class OrdersHandler:
         """
         targets = []
         for order_ID in self._order_list():
-            order = self.get(order_ID)
-            
-            if order.payer == customer_ID:
-                targets.append(order)
+            try:
+                order = self.get(order_ID)
+                if order.payer == customer_ID:
+                    targets.append(order)
+            except FileNotFoundError:
+                # Order in index but file missing - skip
+                continue
                 
         return targets            
         
