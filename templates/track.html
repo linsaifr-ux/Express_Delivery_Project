@@ -1,0 +1,19 @@
+{% extends 'base.html' %}
+
+{% block title %}Track Package - Express Delivery{% endblock %}
+
+{% block content %}
+<div style="max-width: 600px; margin: 0 auto; text-align: center;">
+    <h1>Track Your Package</h1>
+    <p>Enter your Order ID below to check the status of your shipment.</p>
+
+    <div class="card">
+        <form action="{{ url_for('track') }}" method="POST">
+            <div class="form-group">
+                <input type="text" name="order_id" placeholder="Enter Order ID (e.g., C00001-...)" required>
+            </div>
+            <button type="submit" class="btn">Track</button>
+        </form>
+    </div>
+</div>
+{% endblock %}

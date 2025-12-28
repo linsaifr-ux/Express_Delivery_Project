@@ -1,0 +1,54 @@
+{% extends 'base.html' %}
+
+{% block title %}Order Details - Express Delivery{% endblock %}
+
+{% block content %}
+<div class="card">
+    <h2>Order Details: {{ order.ID }}</h2>
+
+    <div style="display: flex; flex-wrap: wrap;">
+        <div style="flex: 1; min-width: 300px;">
+            <h3>Information</h3>
+            <p><strong>Status:</strong> {{ order.status }}</p> <!-- Assuming status attribute exists or similar -->
+            <p><strong>Service:</strong> {{ order.service.name }}</p>
+            <p><strong>Due Date:</strong> {{ order.due_date }}</p>
+            <p><strong>Payer:</strong> {{ order.payer }}</p>
+        </div>
+
+        <div style="flex: 1; min-width: 300px;">
+            <h3>Route</h3>
+            <p><strong>Origin:</strong> {{ order.origin }}</p>
+            <p><strong>Destination:</strong> {{ order.destination }}</p>
+        </div>
+    </div>
+
+    <h3>Package Logs</h3>
+    {% if order.log %}
+    <table>
+        <thead>
+            <tr>
+                <th>Time</th>
+                <th>Event</th>
+                <th>Description</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for log_entry in order.log %}
+            <tr>
+                <td>{{ log_entry.time_stamp }}</td>
+                <td>{{ log_entry.__class__.__name__ }}</td>
+                <td>{{ log_entry.summarize() }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p>No logs available for this order.</p>
+    {% endif %}
+
+    <div style="margin-top: 20px;">
+        <a href="{{ url_for('track') }}" class="btn" style="background-color: var(--secondary-color);">Back to
+            Tracking</a>
+    </div>
+</div>
+{% endblock %}
