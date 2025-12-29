@@ -9,15 +9,50 @@ sys.path.append(os.path.join(os.path.dirname(__file__), 'Services'))
 try:
     from OrderHandler import OrdersHandler
     from Customer import Customer
-    from Staff import Staff, Driver, RepoStaff, Management, CSStaff
     from CustomerTypes import Normal, Contracted, Sponsored
     from Location import Destination
     from PaymentArrangement import BillingTiming
     from Order import Service
     from logger import get_security_logger
+    from Staff import Staff, Driver, RepoStaff, Management, CSStaff, get_dir as get_staff_dir
 except ImportError as e:
     print(f"Error importing services: {e}")
     sys.exit(1)
+
+def find_vehicle(plate):
+    """Find a vehicle object by license plate by searching Driver files."""
+    staff_dir = get_staff_dir()
+    if not os.path.exists(staff_dir):
+        return None
+        
+    for filename in os.listdir(staff_dir):
+        if filename.endswith(".pkl"):
+            try:
+                staff_id = filename[:-4]
+                staff = Staff.from_ID(staff_id)
+                if isinstance(staff, Driver) and staff._vehicle.license_plate == plate:
+                    return staff._vehicle
+            except Exception:
+                continue
+    return None
+
+def find_repo(name):
+    """Find a repository object by name by searching RepoStaff files."""
+    staff_dir = get_staff_dir()
+    if not os.path.exists(staff_dir):
+        return None
+        
+    for filename in os.listdir(staff_dir):
+        if filename.endswith(".pkl"):
+            try:
+                staff_id = filename[:-4]
+                staff = Staff.from_ID(staff_id)
+                if isinstance(staff, RepoStaff) and staff._repository.name == name:
+                    return staff._repository
+            except Exception:
+                continue
+    return None
+
 
 app = Flask(__name__)
 app.secret_key = 'super_secret_key'
@@ -290,9 +325,41 @@ def staff_search():
         if search_type == 'customer':
             cust_id = request.form.get('customer_id')
             results = staff.filter_by_customer(cust_id)
+            
         elif search_type == 'delayed':
              if isinstance(staff, (Management, CSStaff)):
                  results = staff.filter_delayed()
+                 
+        elif search_type == 'date':
+            start_str = request.form.get('start_date')
+            end_str = request.form.get('end_date')
+            if start_str and end_str and isinstance(staff, (Management, CSStaff)):
+                try:
+                    start_date = datetime.datetime.strptime(start_str, '%Y-%m-%d').date()
+                    end_date = datetime.datetime.strptime(end_str, '%Y-%m-%d').date()
+                    results = staff.filter_by_date(start_date, end_date)
+                except ValueError:
+                    flash("Invalid date format.", "error")
+
+        elif search_type == 'vehicle':
+            plate = request.form.get('license_plate')
+            vehicle = find_vehicle(plate)
+            if vehicle and isinstance(staff, Management):
+                results = list(staff.filter_by_vehicle(vehicle))
+                # Vehicle filtering returns a set, convert to list
+            else:
+                 if not vehicle:
+                     flash(f"Vehicle with plate {plate} not found (must be assigned to a driver).", "error")
+
+        elif search_type == 'repo':
+            name = request.form.get('repo_name')
+            repo = find_repo(name)
+            if repo and isinstance(staff, Management):
+                results = list(staff.filter_by_repo(repo))
+                 # Repo filtering returns a set, convert to list
+            else:
+                if not repo:
+                    flash(f"Repository {name} not found (must be assigned to staff).", "error")
         
         context = {
             'staff': staff,

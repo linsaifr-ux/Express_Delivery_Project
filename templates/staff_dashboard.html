@@ -146,13 +146,43 @@
 
     <h3>Search System</h3>
     <form action="{{ url_for('staff_search') }}" method="POST" style="margin-top: 20px;">
-        <select name="search_type">
+        <select name="search_type" onchange="updateSearchInputs(this)" style="padding: 5px; border-radius: 4px;">
             <option value="customer">By Customer ID</option>
             <option value="delayed">Delayed Orders</option>
+            <option value="date">By Date Range</option>
+            <option value="vehicle">By Vehicle (Plate)</option>
+            <option value="repo">By Repository (Name)</option>
         </select>
-        <input type="text" name="customer_id" placeholder="Customer ID (if applicable)">
-        <button type="submit" class="btn">Search</button>
+
+        <div id="input-container" style="display: inline-block; margin-left: 10px;">
+            <!-- Default Customer Input -->
+            <input type="text" name="customer_id" placeholder="Customer ID">
+        </div>
+
+        <button type="submit" class="btn" style="margin-left: 10px;">Search</button>
     </form>
+
+    <script>
+        function updateSearchInputs(select) {
+            const container = document.getElementById('input-container');
+            const val = select.value;
+
+            if (val === 'customer') {
+                container.innerHTML = '<input type="text" name="customer_id" placeholder="Customer ID" required>';
+            } else if (val === 'date') {
+                container.innerHTML = `
+                    <input type="date" name="start_date" required placeholder="Start Date"> to 
+                    <input type="date" name="end_date" required placeholder="End Date">
+                `;
+            } else if (val === 'vehicle') {
+                container.innerHTML = '<input type="text" name="license_plate" placeholder="License Plate" required>';
+            } else if (val === 'repo') {
+                container.innerHTML = '<input type="text" name="repo_name" placeholder="Repository Name" required>';
+            } else if (val === 'delayed') {
+                container.innerHTML = ''; // No input needed
+            }
+        }
+    </script>
 
     <!-- CS STAFF VIEW -->
     {% elif role_type == 'CSStaff' %}
