@@ -3,5 +3,6 @@
     "project_name": "SE_Term_Project",
     "customer_suffix": "\\customer\\",
     "staff_suffix": "\\staff\\",
-    "order_suffix": "\\order\\"
+    "order_suffix": "\\order\\",
+    "repo_suffix": "repo"
 }

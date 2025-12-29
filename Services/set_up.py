@@ -3,6 +3,7 @@ This is a set up program that creates config.json and the necessary directories
 in the file system.
 """
 from os import makedirs
+from os.path import join
 import json
 from platformdirs import user_data_dir, user_config_dir, user_cache_dir
 
@@ -30,9 +31,11 @@ def create_dir(path: str) -> None:
 ## Parameters
 config: dict = {"app_name": "DeliverySystem",
                 "project_name":"SE_Term_Project",
-                "customer_suffix": "\\customer\\",
-                "staff_suffix": "\\staff\\",
-                "order_suffix": "\\order\\"
+                "customer_suffix": "customer",
+                "staff_suffix": "staff",
+                "order_suffix": "order",
+                "repo_suffix":  "repo",
+                "vehicle_suffix": "vehicle"
                 }
 
 
@@ -41,14 +44,18 @@ data_dir = user_data_dir(config["app_name"], config["project_name"])
 config_dir = user_config_dir(config["app_name"], config["project_name"])
 cache_dir = user_cache_dir(config["app_name"], config["project_name"])
 
-customer_dir = data_dir + config["customer_suffix"]
-staff_dir = data_dir + config["staff_suffix"]
-order_dir = data_dir + config["order_suffix"]
+customer_dir = join(data_dir, config["customer_suffix"])
+staff_dir = join(data_dir, config["staff_suffix"])
+order_dir = join(data_dir, config["order_suffix"])
+repo_dir = join(data_dir, config["repo_suffix"])
+vehicle_dir = join(data_dir, config["vehicle_suffix"])
 
 ## create directories in local file system
 create_dir(customer_dir)
 create_dir(staff_dir)
 create_dir(order_dir)
+create_dir(repo_dir)
+create_dir(vehicle_dir)
 
 ## Create config.json
 with open("config.json", "w") as file:
@@ -62,6 +69,8 @@ if __name__ == "__main__":
     assert Path(customer_dir).is_dir()
     assert Path(staff_dir).is_dir()
     assert Path(order_dir).is_dir()
+    assert Path(repo_dir).is_dir()
+    assert Path(vehicle_dir).is_dir()
     
     
     
