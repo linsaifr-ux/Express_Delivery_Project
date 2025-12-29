@@ -32,6 +32,12 @@ def index():
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
+    # If user is already logged in, redirect to appropriate dashboard
+    if session.get('user_id'):
+        if session.get('is_staff'):
+            return redirect(url_for('staff_dashboard'))
+        return redirect(url_for('dashboard'))
+
     if request.method == 'POST':
         username = request.form.get('username')
         password = request.form.get('password')
@@ -167,10 +173,144 @@ def staff_dashboard():
 
     try:
         staff = Staff.from_ID(session['user_id'])
-        return render_template('staff_dashboard.html', staff=staff)
+        
+        # Prepare context data based on role
+        context = {
+            'staff': staff,
+            'role': staff.position,
+            'packages': [],
+            'search_results': None
+        }
+        
+        if isinstance(staff, Driver):
+             context['packages'] = list(staff.package_on_vehicle())
+             context['role_type'] = 'Driver'
+             
+        elif isinstance(staff, RepoStaff):
+            context['packages'] = list(staff.package_at_repo())
+            context['role_type'] = 'RepoStaff'
+            
+        elif isinstance(staff, Management):
+            context['role_type'] = 'Management'
+            
+        elif isinstance(staff, CSStaff):
+            context['role_type'] = 'CSStaff'
+
+        return render_template('staff_dashboard.html', **context)
     except Exception as e:
+        logger.error(f"STAFF_DASHBOARD_ERROR | user={session.get('user_id')} | error={str(e)}")
         flash(f"Error loading staff dashboard: {e}", "error")
         return redirect(url_for('logout'))
+
+@app.route('/staff/action', methods=['POST'])
+def staff_action():
+    if not session.get('user_id') or not session.get('is_staff'):
+        return redirect(url_for('login'))
+        
+    action = request.form.get('action')
+    order_id = request.form.get('order_id')
+    description = request.form.get('description') # for damage/lost
+    
+    try:
+        staff = Staff.from_ID(session['user_id'])
+        
+        if action == 'arrival' and isinstance(staff, RepoStaff):
+            staff.report_arrival(order_id)
+            flash(f"Order {order_id} arrival reported.", "success")
+            
+        elif action == 'transit' and isinstance(staff, Driver):
+            staff.report_transit(order_id)
+            flash(f"Order {order_id} picked up for transit.", "success")
+            
+        elif action == 'deliver' and isinstance(staff, Driver):
+            staff.report_delivered(order_id)
+            flash(f"Order {order_id} delivered.", "success")
+            
+        elif action == 'damage':
+            if isinstance(staff, (Driver, RepoStaff)):
+                staff.report_damage(order_id, description)
+                flash(f"Order {order_id} reported damaged.", "warning")
+                
+        elif action == 'lost':
+             if isinstance(staff, (Driver, RepoStaff)):
+                staff.report_lost(order_id, description)
+                flash(f"Order {order_id} reported lost.", "error")
+                
+        logger.info(f"STAFF_ACTION | user={staff.ID} | action={action} | order={order_id}")
+            
+    except Exception as e:
+        logger.error(f"STAFF_ACTION_ERROR | user={session.get('user_id')} | action={action} | error={str(e)}")
+        flash(f"Action failed: {e}", "error")
+        
+    return redirect(url_for('staff_dashboard'))
+
+@app.route('/staff/management/add', methods=['POST'])
+def add_asset():
+    if not session.get('user_id') or not session.get('is_staff'):
+        return redirect(url_for('login'))
+        
+    asset_type = request.form.get('asset_type')
+    
+    try:
+        staff = Staff.from_ID(session['user_id'])
+        if not isinstance(staff, Management):
+            raise PermissionError("Only Management can perform this action.")
+            
+        if asset_type == 'vehicle':
+            v_type = request.form.get('type') # e.g. Truck, Minivan
+            plate = request.form.get('license_plate')
+            staff.add_vehicle(v_type, plate)
+            flash(f"Vehicle {plate} added.", "success")
+            
+        elif asset_type == 'repo':
+            name = request.form.get('name')
+            address = request.form.get('address')
+            staff.add_repo(address, name)
+            flash(f"Repository {name} added.", "success")
+            
+        logger.info(f"ASSET_ADDED | user={staff.ID} | type={asset_type}")
+            
+    except Exception as e:
+        flash(f"Error adding asset: {e}", "error")
+        
+    return redirect(url_for('staff_dashboard'))
+
+@app.route('/staff/search', methods=['POST'])
+def staff_search():
+    if not session.get('user_id') or not session.get('is_staff'):
+        return redirect(url_for('login'))
+        
+    search_type = request.form.get('search_type')
+    
+    try:
+        staff = Staff.from_ID(session['user_id'])
+        results = []
+        
+        if search_type == 'customer':
+            cust_id = request.form.get('customer_id')
+            results = staff.filter_by_customer(cust_id)
+        elif search_type == 'delayed':
+             if isinstance(staff, (Management, CSStaff)):
+                 results = staff.filter_delayed()
+        
+        context = {
+            'staff': staff,
+            'role': staff.position,
+            'packages': [],
+            'search_results': results, # Now populated
+            'role_type': staff.__class__.__name__
+        }
+        
+        if isinstance(staff, Driver):
+             context['packages'] = list(staff.package_on_vehicle())
+        elif isinstance(staff, RepoStaff):
+            context['packages'] = list(staff.package_at_repo())
+            
+        return render_template('staff_dashboard.html', **context)
+
+    except Exception as e:
+        flash(f"Search error: {e}", "error")
+        return redirect(url_for('staff_dashboard'))
 
 @app.route('/track', methods=['GET', 'POST'])
 def track():
