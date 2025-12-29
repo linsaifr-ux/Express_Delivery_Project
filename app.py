@@ -8,7 +8,7 @@ sys.path.append(os.path.join(os.path.dirname(__file__), 'Services'))
 
 try:
     from OrderHandler import OrdersHandler
-    from Customer import Customer
+    from Customer import Customer, get_dir as get_customer_dir
     from CustomerTypes import Normal, Contracted, Sponsored
     from Location import Destination
     from PaymentArrangement import BillingTiming
@@ -268,6 +268,73 @@ def dashboard():
     except Exception as e:
         flash(f"Error loading dashboard: {e}", "error")
         return redirect(url_for('logout'))
+
+@app.route('/profile/edit', methods=['GET', 'POST'])
+def edit_profile():
+    if not session.get('user_id') or session.get('is_staff'):
+        return redirect(url_for('login'))
+        
+    customer = Customer.from_ID(session['user_id'])
+    
+    if request.method == 'POST':
+        try:
+            # Get new values
+            first_name = request.form.get('first_name')
+            last_name = request.form.get('last_name')
+            email = request.form.get('email')
+            phone = request.form.get('phone')
+            address_str = request.form.get('address')
+            password = request.form.get('password')
+            
+            # Update Simple Fields by accessing protected members (since no setters provided for all)
+            # This bypasses the typical Interface but is necessary as per request "Do not edit services"
+            customer._first_name = first_name
+            customer._last_name = last_name
+            customer._password = password
+            
+            # Use property setter for phone number (validates input)
+            customer.number = phone
+            
+            # Use property setter for address
+            customer.address = Destination(address_str)
+            
+            # Handle Email update (requires index update)
+            if email != customer.email:
+                old_email = customer.email
+                import json
+                index_path = os.path.join(get_customer_dir(), 'email_index.json')
+                
+                if os.path.exists(index_path):
+                    with open(index_path, 'r', encoding='utf-8') as f:
+                        email_index = json.load(f)
+                else:
+                    email_index = {}
+                
+                # Check for collision
+                if email in email_index:
+                    raise ValueError("Email already in use.")
+                
+                # Update index
+                del email_index[old_email]
+                email_index[email] = customer.ID
+                
+                with open(index_path, 'w', encoding='utf-8') as f:
+                    json.dump(email_index, f, indent=2)
+                
+                customer._email = email
+            
+            customer.save()
+            flash("Profile updated successfully.", "success")
+            logger.info(f"PROFILE_UPDATE | ID={customer.ID} | Updated")
+            return redirect(url_for('dashboard'))
+            
+        except ValueError as e:
+            flash(f"Update failed: {e}", "error")
+        except Exception as e:
+            flash(f"An error occurred: {e}", "error")
+            logger.error(f"PROFILE_UPDATE_ERROR | ID={customer.ID} | Error={str(e)}")
+            
+    return render_template('edit_profile.html', customer=customer)
 
 @app.route('/staff_dashboard')
 def staff_dashboard():
