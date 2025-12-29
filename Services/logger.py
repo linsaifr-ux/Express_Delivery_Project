@@ -43,7 +43,7 @@ def get_security_logger() -> logging.Logger:
         # Avoid adding duplicate handlers
         if not _security_logger.handlers:
             # Create log directory
-            log_dir = user_log_dir("PackageSystem", "SE_Project")
+            log_dir = user_log_dir("PackageSystem", "SE_Term_Project")
             makedirs(log_dir, exist_ok=True)
             
             # File handler
@@ -78,7 +78,7 @@ def get_log_path() -> str:
     str
         Absolute path to the security.log file.
     """
-    log_dir = user_log_dir("PackageSystem", "SE_Project")
+    log_dir = user_log_dir("PackageSystem", "SE_Term_Project")
     return join(log_dir, "security.log")
 
 
