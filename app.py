@@ -101,6 +101,29 @@ def fixed_verify_payment(self, bill_ID: str):
 Customer.bill = fixed_bill
 Customer.verify_payment = fixed_verify_payment
 
+# Monkey Patch OrdersHandler.filter_by_date to fix search error on missing files
+def fixed_filter_by_date(self, start_date, end_date) -> list:
+    """
+    Get all orders with their due date within a date range. (Monkey Patched)
+    Handles missing files gracefully.
+    """
+    targets = []
+    for order_ID in self._order_list():
+        try:
+            # Try to get the order. If file missing, it might raise Error.
+            order = self.get(order_ID)
+            
+            # Check date range
+            if order.due_date >= start_date and order.due_date <= end_date:
+                targets.append(order)
+        except Exception:
+            # Skip if order cannot be loaded (e.g. file missing)
+            continue
+            
+    return targets
+
+OrdersHandler.filter_by_date = fixed_filter_by_date
+
 orders_handler = OrdersHandler()
 
 @app.route('/')
