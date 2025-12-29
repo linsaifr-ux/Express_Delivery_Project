@@ -51,6 +51,27 @@
     <p>No packages currently on vehicle.</p>
     {% endif %}
 
+    <h3>Report Incident</h3>
+    <form action="{{ url_for('staff_action') }}" method="POST"
+        style="background-color: #fff4f4; padding: 10px; border-radius: 5px; border: 1px solid #f5c6c6; margin-bottom: 20px;">
+        <div style="margin-bottom: 10px;">
+            <label for="driver_issue_order_id">Order ID:</label>
+            <input type="text" id="driver_issue_order_id" name="order_id" required>
+        </div>
+        <div style="margin-bottom: 10px;">
+            <label>Issue Type:</label>
+            <select name="action">
+                <option value="damage">Damage</option>
+                <option value="lost">Lost</option>
+            </select>
+        </div>
+        <div style="margin-bottom: 10px;">
+            <label for="driver_description">Description:</label>
+            <input type="text" id="driver_description" name="description" placeholder="Details of damage/loss" required>
+        </div>
+        <button type="submit" class="btn" style="background-color: #c0392b;">Report Incident</button>
+    </form>
+
     <!-- REPO STAFF VIEW -->
     {% elif role_type == 'RepoStaff' %}
     <div
