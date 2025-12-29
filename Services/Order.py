@@ -33,7 +33,7 @@ def get_dir() -> str:
     with open('config.json', 'r', encoding='utf-8') as file:
         config = json.load(file)
         
-    return user_data_dir(config['app_name'], config['project_name']) + config['order_suffix']
+    return join(user_data_dir(config['app_name'], config['project_name']), config['order_suffix'])
 
 class Order:
     """

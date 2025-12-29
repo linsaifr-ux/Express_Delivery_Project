@@ -71,6 +71,7 @@ if __name__ == "__main__":
     assert Path(order_dir).is_dir()
     assert Path(repo_dir).is_dir()
     assert Path(vehicle_dir).is_dir()
+    assert Path("config.json").is_file()
     
     
     

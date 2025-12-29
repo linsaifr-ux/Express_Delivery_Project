@@ -19,17 +19,17 @@ from os.path import isfile, join
 
 def get_dir() -> str:
     """
-    Get the data directory path for storing customer data.
+    Get the data directory path for storing order data.
     
     Returns
     -------
     str
-        The full path to the customer data directory.
+        The full path to the order data directory.
     """
     with open('config.json', 'r', encoding='utf-8') as file:
         config = json.load(file)
         
-    return user_data_dir(config['app_name'], config['project_name']) + config['customer_suffix']
+    return join(user_data_dir(config['app_name'], config['project_name']), config['customer_suffix'])
 
 class Customer(ABC):
     """
