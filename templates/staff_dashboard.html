@@ -53,12 +53,39 @@
 
     <!-- REPO STAFF VIEW -->
     {% elif role_type == 'RepoStaff' %}
+    <div
+        style="background-color: #f0f2f5; padding: 15px; border-radius: 8px; margin-bottom: 20px; border: 1px solid #ddd;">
+        <h3 style="margin-top: 0;">Repository: {{ repository.name }}</h3>
+        <p style="margin-bottom: 0;"><strong>Location:</strong> {{ repository.address }}</p>
+    </div>
+
     <h3>Receive Package</h3>
     <form action="{{ url_for('staff_action') }}" method="POST" style="margin-bottom: 20px;">
         <input type="hidden" name="action" value="arrival">
         <label for="order_id">Order ID:</label>
         <input type="text" id="order_id" name="order_id" required>
         <button type="submit" class="btn">Report Arrival</button>
+    </form>
+
+    <h3>Report Incident</h3>
+    <form action="{{ url_for('staff_action') }}" method="POST"
+        style="background-color: #fff4f4; padding: 10px; border-radius: 5px; border: 1px solid #f5c6c6; margin-bottom: 20px;">
+        <div style="margin-bottom: 10px;">
+            <label for="issue_order_id">Order ID:</label>
+            <input type="text" id="issue_order_id" name="order_id" required>
+        </div>
+        <div style="margin-bottom: 10px;">
+            <label>Issue Type:</label>
+            <select name="action">
+                <option value="damage">Damage</option>
+                <option value="lost">Lost</option>
+            </select>
+        </div>
+        <div style="margin-bottom: 10px;">
+            <label for="description">Description:</label>
+            <input type="text" id="description" name="description" placeholder="Details of damage/loss" required>
+        </div>
+        <button type="submit" class="btn" style="background-color: #c0392b;">Report Incident</button>
     </form>
 
     <h3>Packages at Repository</h3>

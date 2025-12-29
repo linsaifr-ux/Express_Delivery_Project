@@ -189,6 +189,7 @@ def staff_dashboard():
         elif isinstance(staff, RepoStaff):
             context['packages'] = list(staff.package_at_repo())
             context['role_type'] = 'RepoStaff'
+            context['repository'] = staff._repository
             
         elif isinstance(staff, Management):
             context['role_type'] = 'Management'
