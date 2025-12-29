@@ -13,12 +13,37 @@
             <p><strong>Service:</strong> {{ order.service.name }}</p>
             <p><strong>Due Date:</strong> {{ order.due_date }}</p>
             <p><strong>Payer:</strong> {{ order.payer }}</p>
+            <p><strong>Bill Amount:</strong> ${{ order.fee }}</p>
         </div>
 
         <div style="flex: 1; min-width: 300px;">
             <h3>Route</h3>
             <p><strong>Origin:</strong> {{ order.origin }}</p>
             <p><strong>Destination:</strong> {{ order.destination }}</p>
+        </div>
+
+        <div style="flex: 1; min-width: 300px;">
+            <h3>Payment</h3>
+            {% if order.bill_ref %}
+            <p><strong>Bill ID:</strong> {{ order.bill_ref }}</p>
+
+            {# Check if we can determine payment status easily.
+            Ideally we pass the bill object or status.
+            For now, we just expose the buttons.
+            Users can try to pay/verify. #}
+
+            <div style="display: flex; gap: 10px; margin-top: 10px;">
+                <form action="{{ url_for('pay_bill', bill_id=order.bill_ref) }}" method="POST">
+                    <button type="submit" class="btn">Pay Now</button>
+                </form>
+
+                <form action="{{ url_for('verify_payment_route', bill_id=order.bill_ref) }}" method="POST">
+                    <button type="submit" class="btn" style="background-color: #28a745;">Verify Payment</button>
+                </form>
+            </div>
+            {% else %}
+            <p>No bill generated yet.</p>
+            {% endif %}
         </div>
     </div>
 

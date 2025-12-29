@@ -73,16 +73,55 @@
                 document.getElementById("account_field").style.display = (type === "Contracted") ? "block" : "none";
                 document.getElementById("sponsor_field").style.display = (type === "Sponsored") ? "block" : "none";
 
-                // Contracted customers are forced to Monthly, so maybe hide or disable billing pref?
-                // For now, we'll handle enforcement in backend, but visual cue is good.
                 var billingSelect = document.getElementById("billing_pref");
-                if (type === "Contracted") {
-                    billingSelect.value = "monthly";
-                    billingSelect.disabled = true;
-                } else {
-                    billingSelect.disabled = false;
+                var options = billingSelect.options;
+
+                // Reset all options to enabled first
+                for (var i = 0; i < options.length; i++) {
+                    options[i].hidden = false;
+                    options[i].disabled = false;
                 }
+
+                if (type === "Contracted") {
+                    // Contracted: Only Monthly
+                    for (var i = 0; i < options.length; i++) {
+                        if (options[i].value !== "monthly") {
+                            options[i].hidden = true;
+                            options[i].disabled = true;
+                        }
+                    }
+                    billingSelect.value = "monthly";
+
+                } else if (type === "Normal") {
+                    // Normal: In Advance or On Delivery
+                    for (var i = 0; i < options.length; i++) {
+                        if (options[i].value === "monthly") {
+                            options[i].hidden = true;
+                            options[i].disabled = true;
+                        }
+                    }
+                    // Default to In Advance if currently correctly selected or if switching from Contracted
+                    if (billingSelect.value === "monthly") {
+                        billingSelect.value = "in_advance";
+                    }
+
+                } else if (type === "Sponsored") {
+                    // Sponsored: Only In Advance
+                    for (var i = 0; i < options.length; i++) {
+                        if (options[i].value !== "in_advance") {
+                            options[i].hidden = true;
+                            options[i].disabled = true;
+                        }
+                    }
+                    billingSelect.value = "in_advance";
+                }
+
+                // Ensure enabled state for submission
+                billingSelect.disabled = false;
             }
+
+            // Run on load to set initial state
+            window.onload = toggleFields;
         </script>
 
         <button type="submit" class="btn" style="width: 100%;">Register</button>

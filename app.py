@@ -59,6 +59,48 @@ app.secret_key = 'super_secret_key'
 
 # Initialize Loggers
 logger = get_security_logger()
+
+# Monkey Patch Customer.bill and verify_payment
+from Services.Bill import Bill, MonthlyBill
+def fixed_bill(self, order):
+    """
+    Create or add to a bill for an order. (Monkey Patched)
+    """
+    if order.bill_ref is not None:
+        return
+    
+    # Fix: Convert .values() to list to support indexing
+    bills = list(self._bill.values())
+    
+    if (order.bill_timing is not BillingTiming.monthly
+        or not bills  # Handle case where bills list is empty
+        or bills[-1].issue_status): # The last bill is issued
+        
+        # Use MonthlyBill for monthly timing, otherwise generic Bill
+        if order.bill_timing is BillingTiming.monthly:
+            my_bill = MonthlyBill(self, order)
+        else:
+            my_bill = Bill(self, order)
+            
+        self._bill[my_bill.ID] = my_bill
+    else:
+        bills[-1].add_item(order)
+
+    self.save()
+
+def fixed_verify_payment(self, bill_ID: str):
+    """
+    Verify payment for a specific bill. (Monkey Patched)
+    """
+    if bill_ID in self._bill:
+        self._bill[bill_ID].verify_payment()
+        self.save()
+    else:
+        raise ValueError(f"Bill {bill_ID} not found.")
+
+Customer.bill = fixed_bill
+Customer.verify_payment = fixed_verify_payment
+
 orders_handler = OrdersHandler()
 
 @app.route('/')
@@ -127,7 +169,10 @@ def register():
         customer_type = request.form.get('customer_type')
 
         try:
-            billing_pref = getattr(BillingTiming, billing_pref_str)
+            if billing_pref_str:
+                billing_pref = getattr(BillingTiming, billing_pref_str)
+            else:
+                billing_pref = None
             address = Destination(address_str)
             
             if customer_type == 'Contracted':
@@ -431,8 +476,25 @@ def new_order():
             is_fragile = request.form.get('is_fragile') == 'on'
             
             # Create objects
-            service = getattr(Service, service_str)
-            bill_timing = getattr(BillingTiming, bill_timing_str)
+            if not service_str:
+                # Default to something or handle error
+                 service = Service.standard # Default
+            else:
+                service = getattr(Service, service_str)
+                
+            if bill_timing_str:
+                bill_timing = getattr(BillingTiming, bill_timing_str)
+            else:
+                # Fallback or handle based on user type if needed
+                # For Contracted, they might submit nothing if field is disabled?
+                # But the form usually sends value if it's select.
+                # If disabled, it might not send.
+                if current_user.to_dict()['type'] == 'Contracted':
+                    bill_timing = BillingTiming.monthly
+                elif current_user.to_dict()['type'] == 'Sponsored':
+                     bill_timing = BillingTiming.in_advance
+                else:
+                    bill_timing = BillingTiming.in_advance # Default fallback
             origin = Destination(origin_str)
             destination = Destination(dest_str)
             package_size = (length, width, height)
@@ -472,6 +534,45 @@ def new_order():
             logger.error(f"ORDER_ERROR | User={session.get('user_id')} | Error={str(e)}")
 
     return render_template('new_order.html')
+
+@app.route('/pay/<bill_id>', methods=['POST'])
+def pay_bill(bill_id):
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+    
+    # Simple payment simulation
+    # In a real app, this would process card details etc.
+    customer = Customer.from_ID(session['user_id'])
+    
+    try:
+        # Using a dummy transaction ID and default method (Card) for now
+        # We could expand this to take method from form if needed
+        from Services.PaymentArrangement import PaymentMethod
+        import uuid
+        transaction_id = str(uuid.uuid4())
+        
+        customer.pay(bill_id, transaction_id, PaymentMethod.card)
+        flash(f'Payment successful! Transaction ID: {transaction_id}')
+    except Exception as e:
+        flash(f'Payment failed: {str(e)}')
+        
+    # Redirect back to referring page or dashboard
+    return redirect(request.referrer or url_for('dashboard'))
+
+@app.route('/verify_payment/<bill_id>', methods=['POST'])
+def verify_payment_route(bill_id):
+    if 'user_id' not in session:
+        return redirect(url_for('login'))
+        
+    customer = Customer.from_ID(session['user_id'])
+    
+    try:
+        customer.verify_payment(bill_id)
+        flash('Payment verification successful!')
+    except Exception as e:
+        flash(f'Verification failed: {str(e)}')
+        
+    return redirect(request.referrer or url_for('dashboard'))
 
 if __name__ == '__main__':
     app.run(debug=True)
