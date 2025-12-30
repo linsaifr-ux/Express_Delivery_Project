@@ -363,6 +363,14 @@ def staff_dashboard():
             
         elif isinstance(staff, Management):
             context['role_type'] = 'Management'
+            # Pre-load all orders for Management view
+            all_orders = []
+            for oid in orders_handler._order_list():
+                try:
+                    all_orders.append(orders_handler.get(oid))
+                except Exception:
+                    continue
+            context['search_results'] = all_orders
             
         elif isinstance(staff, CSStaff):
             context['role_type'] = 'CSStaff'
@@ -464,7 +472,18 @@ def staff_search():
         elif search_type == 'delayed':
              if isinstance(staff, (Management, CSStaff)):
                  results = staff.filter_delayed()
-                 
+
+        elif search_type == 'all':
+             if isinstance(staff, Management):
+                 # Retrieve all orders directly using OrdersHandler
+                 # Note: iterating over _order_list avoids editing Service files to add get_all()
+                 results = []
+                 for oid in orders_handler._order_list():
+                     try:
+                         results.append(orders_handler.get(oid))
+                     except Exception:
+                         continue
+
         elif search_type == 'date':
             start_str = request.form.get('start_date')
             end_str = request.form.get('end_date')

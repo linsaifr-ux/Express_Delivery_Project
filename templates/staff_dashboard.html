@@ -169,6 +169,7 @@
     <form action="{{ url_for('staff_search') }}" method="POST" style="margin-top: 20px;">
         <select name="search_type" onchange="updateSearchInputs(this)" style="padding: 5px; border-radius: 4px;">
             <option value="customer">By Customer ID</option>
+            <option value="all">All Orders</option> <!-- ALL ORDERS OPTION ADDED -->
             <option value="delayed">Delayed Orders</option>
             <option value="date">By Date Range</option>
             <option value="vehicle">By Vehicle (Plate)</option>
@@ -199,7 +200,7 @@
                 container.innerHTML = '<input type="text" name="license_plate" placeholder="License Plate" required>';
             } else if (val === 'repo') {
                 container.innerHTML = '<input type="text" name="repo_name" placeholder="Repository Name" required>';
-            } else if (val === 'delayed') {
+            } else if (val === 'delayed' || val === 'all') {
                 container.innerHTML = ''; // No input needed
             }
         }
@@ -221,7 +222,7 @@
 
     <!-- Search Results Section -->
     {% if search_results is not none %}
-    <h3>Search Results</h3>
+    <h3>Orders</h3>
     {% if search_results %}
     <table>
         <thead>
