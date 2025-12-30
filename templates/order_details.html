@@ -48,7 +48,7 @@
     </div>
 
     <h3>Package Logs</h3>
-    {% if order.log %}
+    {% if order.all_logs() %}
     <table>
         <thead>
             <tr>
@@ -58,7 +58,7 @@
             </tr>
         </thead>
         <tbody>
-            {% for log_entry in order.log %}
+            {% for log_entry in order.all_logs() %}
             <tr>
                 <td>{{ log_entry.time_stamp }}</td>
                 <td>{{ log_entry.__class__.__name__ }}</td>
